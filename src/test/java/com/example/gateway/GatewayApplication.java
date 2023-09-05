@@ -12,14 +12,15 @@ import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
 @SpringBootApplication
 public class GatewayApplication {
 
+	private String dates = "https://date.nager.at";
+	private String wizards = "https://wizard-world-api.herokuapp.com";
+
 	public static void main(String[] args) {
 		SpringApplication.run(GatewayApplication.class, args);
 	}
 
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
-		var dates = "https://date.nager.at";
-		var wizards = "https://wizard-world-api.herokuapp.com";
 		return rlb
 				.routes()
 				.route(r -> r
@@ -36,8 +37,8 @@ public class GatewayApplication {
 	@Bean
 	OpenApiAggregatorSpecs specs() {
 		return new OpenApiAggregatorSpecs()
-				.spec(new Spec("https://date.nager.at/swagger/v3/swagger.json").replace("/api/v3", "/dates"))
-				.spec(new Spec("https://wizard-world-api.herokuapp.com/swagger/v1/swagger.json").prefix("/wizards"));
+				.spec(new Spec(dates + "/swagger/v3/swagger.json").replace("/api/v3", "/dates"))
+				.spec(new Spec(wizards + "/swagger/v1/swagger.json").prefix("/wizards"));
 	}
 
 }
