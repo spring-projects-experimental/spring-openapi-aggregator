@@ -1,19 +1,31 @@
 package com.example.gateway;
 
-import java.net.URI;
-import java.util.Optional;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.gateway.OpenApiAggregatorSpecs.Spec;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Paths;
+import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 public class GatewayApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(GatewayApplication.class, args);
+	}
+
+	@Bean
+	public Jackson2ObjectMapperBuilderCustomizer objectMapperConfigurer() {
+		return builder -> builder.serializationInclusion(JsonInclude.Include.NON_NULL);
 	}
 
 	@Bean
@@ -31,5 +43,44 @@ public class GatewayApplication {
 						.filters(f -> f.stripPrefix(1))
 						.uri(wizards))
 				.build();
+	}
+
+	@Bean
+	OpenApiAggregatorSpecs specs() {
+		return new OpenApiAggregatorSpecs()
+				.spec(new Spec("https://date.nager.at/swagger/v3/swagger.json",
+						paths -> {
+							Paths result = new Paths();
+							for (String path : paths.keySet()) {
+								if (path.startsWith("/api/v3")) {
+									result.addPathItem(path.replace("/api/v3", "/dates"), paths.get(path));
+								}
+							}
+							return result;
+						}))
+				.spec(new Spec("https://wizard-world-api.herokuapp.com/swagger/v1/swagger.json",
+						paths -> {
+							Paths result = new Paths();
+							for (String path : paths.keySet()) {
+								result.addPathItem("/wizards" + path, paths.get(path));
+							}
+							return result;
+						}));
+
+	}
+
+}
+
+@RestController
+class AggregatorEndpoint {
+	private final OpenApiAggregator aggregator;
+
+	public AggregatorEndpoint(OpenApiAggregator aggregator) {
+		this.aggregator = aggregator;
+	}
+
+	@GetMapping("/api/v3")
+	public Mono<OpenAPI> api() {
+		return aggregator.aggregate();
 	}
 }
