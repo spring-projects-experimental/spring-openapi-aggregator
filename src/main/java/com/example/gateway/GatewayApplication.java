@@ -13,7 +13,6 @@ import com.example.gateway.OpenApiAggregatorSpecs.Spec;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Paths;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication
@@ -25,7 +24,8 @@ public class GatewayApplication {
 
 	@Bean
 	public Jackson2ObjectMapperBuilderCustomizer objectMapperConfigurer() {
-		return builder -> builder.serializationInclusion(JsonInclude.Include.NON_NULL);
+		return builder -> builder.serializationInclusion(JsonInclude.Include.NON_NULL)
+				.serializationInclusion(JsonInclude.Include.NON_DEFAULT);
 	}
 
 	@Bean
