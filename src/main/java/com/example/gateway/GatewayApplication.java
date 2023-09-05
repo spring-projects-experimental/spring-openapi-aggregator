@@ -48,25 +48,8 @@ public class GatewayApplication {
 	@Bean
 	OpenApiAggregatorSpecs specs() {
 		return new OpenApiAggregatorSpecs()
-				.spec(new Spec("https://date.nager.at/swagger/v3/swagger.json",
-						paths -> {
-							Paths result = new Paths();
-							for (String path : paths.keySet()) {
-								if (path.startsWith("/api/v3")) {
-									result.addPathItem(path.replace("/api/v3", "/dates"), paths.get(path));
-								}
-							}
-							return result;
-						}))
-				.spec(new Spec("https://wizard-world-api.herokuapp.com/swagger/v1/swagger.json",
-						paths -> {
-							Paths result = new Paths();
-							for (String path : paths.keySet()) {
-								result.addPathItem("/wizards" + path, paths.get(path));
-							}
-							return result;
-						}));
-
+				.spec(new Spec("https://date.nager.at/swagger/v3/swagger.json").replace("/api/v3", "/dates"))
+				.spec(new Spec("https://wizard-world-api.herokuapp.com/swagger/v1/swagger.json").prefix("/wizards"));
 	}
 
 }
@@ -79,7 +62,7 @@ class AggregatorEndpoint {
 		this.aggregator = aggregator;
 	}
 
-	@GetMapping("/api/v3")
+	@GetMapping("/v3/api-docs")
 	public Mono<OpenAPI> api() {
 		return aggregator.aggregate();
 	}
