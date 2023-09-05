@@ -1,11 +1,11 @@
-package com.example.gateway;
+package com.example.aggregator;
 
 import java.util.HashMap;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.example.gateway.OpenApiAggregatorSpecs.Spec;
+import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

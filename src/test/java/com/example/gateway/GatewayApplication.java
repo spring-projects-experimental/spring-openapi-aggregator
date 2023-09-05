@@ -2,30 +2,18 @@ package com.example.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.example.gateway.OpenApiAggregatorSpecs.Spec;
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import io.swagger.v3.oas.models.OpenAPI;
-import reactor.core.publisher.Mono;
+import com.example.aggregator.OpenApiAggregatorSpecs;
+import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
 
 @SpringBootApplication
 public class GatewayApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(GatewayApplication.class, args);
-	}
-
-	@Bean
-	public Jackson2ObjectMapperBuilderCustomizer objectMapperConfigurer() {
-		return builder -> builder.serializationInclusion(JsonInclude.Include.NON_NULL)
-				.serializationInclusion(JsonInclude.Include.NON_DEFAULT);
 	}
 
 	@Bean
@@ -52,18 +40,4 @@ public class GatewayApplication {
 				.spec(new Spec("https://wizard-world-api.herokuapp.com/swagger/v1/swagger.json").prefix("/wizards"));
 	}
 
-}
-
-@RestController
-class AggregatorEndpoint {
-	private final OpenApiAggregator aggregator;
-
-	public AggregatorEndpoint(OpenApiAggregator aggregator) {
-		this.aggregator = aggregator;
-	}
-
-	@GetMapping("/v3/api-docs")
-	public Mono<OpenAPI> api() {
-		return aggregator.aggregate();
-	}
 }

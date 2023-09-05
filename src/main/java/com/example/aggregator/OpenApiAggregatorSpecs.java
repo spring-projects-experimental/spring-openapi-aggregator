@@ -1,4 +1,4 @@
-package com.example.gateway;
+package com.example.aggregator;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,9 +8,9 @@ import io.swagger.v3.oas.models.Paths;
 
 public class OpenApiAggregatorSpecs {
 
-	record Spec(String uri, Function<Paths, Paths> paths) {
+	public record Spec(String uri, Function<Paths, Paths> paths) {
 
-		Spec(String uri) {
+		public Spec(String uri) {
 			this(uri, Function.identity());
 		}
 
