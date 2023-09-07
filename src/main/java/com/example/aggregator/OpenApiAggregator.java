@@ -2,6 +2,9 @@ package com.example.aggregator;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.springframework.stereotype.Component;
 
@@ -16,10 +19,10 @@ import io.swagger.v3.oas.models.Paths;
 public class OpenApiAggregator {
 
 	private final ObjectMapper mapper;
-	private OpenApiAggregatorSpecs specs;
-	private OpenAPI base;
+	private final OpenApiAggregatorSpecs specs;
+	private final OpenAPI base;
 
-	OpenApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper mapper, OpenAPI base) {
+	public OpenApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper mapper, OpenAPI base) {
 		this.specs = specs;
 		this.mapper = mapper;
 		this.base = base;
@@ -29,7 +32,7 @@ public class OpenApiAggregator {
 		OpenAPI api = new OpenAPI();
 		merge(api, base);
 		api.setInfo(base.getInfo());
-		if (base.getTags()!=null) {
+		if (base.getTags() != null) {
 			api.setTags(base.getTags());
 		}
 		for (Spec spec : specs.getSpecs()) {
@@ -51,20 +54,38 @@ public class OpenApiAggregator {
 		if (api.getPaths() == null) {
 			api.paths(new Paths());
 		}
+		Components target = api.getComponents();
+		if (target == null) {
+			target = new Components();
+			api.components(target);
+		}
 		for (String path : paths.keySet()) {
 			api.getPaths().addPathItem(path, paths.get(path));
 		}
-		Components components = item.getComponents();
-		if (components != null && components.getSchemas() != null) {
-			if (api.getComponents() == null) {
-				api.components(new Components());
+		Components source = item.getComponents();
+		if (source != null) {
+			merge(source.getCallbacks(), target::getCallbacks, target::setCallbacks);
+			merge(source.getExamples(), target::getExamples, target::setExamples);
+			merge(source.getExtensions(), target::getExtensions, target::setExtensions);
+			merge(source.getHeaders(), target::getHeaders, target::setHeaders);
+			merge(source.getLinks(), target::getLinks, target::setLinks);
+			merge(source.getParameters(), target::getParameters, target::setParameters);
+			merge(source.getPathItems(), target::getPathItems, target::setPathItems);
+			merge(source.getRequestBodies(), target::getRequestBodies, target::setRequestBodies);
+			merge(source.getResponses(), target::getResponses, target::setResponses);
+			merge(source.getSchemas(), target::getSchemas, target::setSchemas);
+			merge(source.getSecuritySchemes(), target::getSecuritySchemes, target::setSecuritySchemes);
+		}
+	}
+
+	private <T> void merge(Map<String, T> source, Supplier<Map<String, T>> getter, Consumer<Map<String, T>> setter) {
+		if (source != null) {
+			Map<String, T> target = getter.get();
+			if (target == null) {
+				target = new HashMap<>();
+				setter.accept(target);
 			}
-			if (api.getComponents().getSchemas() == null) {
-				api.getComponents().setSchemas(new HashMap<>());
-			}
-			for (String schema : components.getSchemas().keySet()) {
-				api.getComponents().getSchemas().put(schema, components.getSchemas().get(schema));
-			}
+			target.putAll(source);
 		}
 	}
 
