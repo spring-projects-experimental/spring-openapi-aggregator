@@ -1,6 +1,5 @@
 package com.example.aggregator;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -39,7 +38,7 @@ public class OpenApiAggregator {
 			OpenAPI item;
 			try {
 				// Blocking...
-				item = mapper.readValue(URI.create(spec.uri()).toURL(), OpenAPI.class);
+				item = mapper.readValue(spec.resource().getInputStream(), OpenAPI.class);
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
 			}

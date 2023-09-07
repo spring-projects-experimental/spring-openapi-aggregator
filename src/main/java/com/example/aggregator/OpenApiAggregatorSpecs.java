@@ -4,14 +4,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+
 import io.swagger.v3.oas.models.Paths;
 
 public class OpenApiAggregatorSpecs {
 
-	public record Spec(String uri, Function<Paths, Paths> paths) {
+	public record Spec(Resource resource, Function<Paths, Paths> paths) {
 
 		public Spec(String uri) {
-			this(uri, Function.identity());
+			this(UrlResource.from(uri), Function.identity());
 		}
 
 		public Paths paths(Paths paths) {
@@ -19,7 +22,7 @@ public class OpenApiAggregatorSpecs {
 		}
 
 		public Spec prefix(String prefix) {
-			return new Spec(uri(), paths().andThen(paths -> {
+			return new Spec(resource(), paths().andThen(paths -> {
 				Paths result = new Paths();
 				for (String path : paths.keySet()) {
 					result.addPathItem(prefix + path, paths.get(path));
@@ -29,7 +32,7 @@ public class OpenApiAggregatorSpecs {
 		}
 
 		public Spec replace(String pattern, String replacement) {
-			return new Spec(uri(), paths().andThen(paths -> {
+			return new Spec(resource(), paths().andThen(paths -> {
 				Paths result = new Paths();
 				for (String path : paths.keySet()) {
 					if (path.contains(pattern)) {
