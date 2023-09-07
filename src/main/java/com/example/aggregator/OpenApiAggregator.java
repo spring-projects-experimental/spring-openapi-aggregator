@@ -11,27 +11,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.info.Info;
 
 @Component
 public class OpenApiAggregator {
 
 	private final ObjectMapper mapper;
 	private OpenApiAggregatorSpecs specs;
+	private OpenAPI base;
 
-	OpenApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper mapper) {
+	OpenApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper mapper, OpenAPI base) {
 		this.specs = specs;
 		this.mapper = mapper;
+		this.base = base;
 	}
 
 	public OpenAPI aggregate() {
 		OpenAPI api = new OpenAPI();
-		api.paths(new Paths());
-		api.components(new Components());
-		api.info(new Info()
-				.title("Gateway API")
-				.description("Gateway API")
-				.version("1.0.0"));
+		merge(api, base);
+		api.setInfo(base.getInfo());
+		if (base.getTags()!=null) {
+			api.setTags(base.getTags());
+		}
 		for (Spec spec : specs.getSpecs()) {
 			OpenAPI item;
 			try {
@@ -40,19 +40,32 @@ public class OpenApiAggregator {
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
-			Paths paths = spec.paths(item.getPaths());
-			for (String path : paths.keySet()) {
-				api.getPaths().addPathItem(path, paths.get(path));
+			item.paths(spec.paths(item.getPaths()));
+			merge(api, item);
+		}
+		return api;
+	}
+
+	private void merge(OpenAPI api, OpenAPI item) {
+		Paths paths = item.getPaths();
+		if (api.getPaths() == null) {
+			api.paths(new Paths());
+		}
+		for (String path : paths.keySet()) {
+			api.getPaths().addPathItem(path, paths.get(path));
+		}
+		Components components = item.getComponents();
+		if (components != null && components.getSchemas() != null) {
+			if (api.getComponents() == null) {
+				api.components(new Components());
 			}
-			Components components = item.getComponents();
-			if (components != null && components.getSchemas() != null && api.getComponents().getSchemas() == null) {
+			if (api.getComponents().getSchemas() == null) {
 				api.getComponents().setSchemas(new HashMap<>());
 			}
 			for (String schema : components.getSchemas().keySet()) {
 				api.getComponents().getSchemas().put(schema, components.getSchemas().get(schema));
 			}
 		}
-		return api;
 	}
 
 }

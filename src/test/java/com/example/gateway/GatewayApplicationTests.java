@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 
 import io.swagger.v3.oas.models.OpenAPI;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.openapi.base.info.description=Gateway API In Test")
 class GatewayApplicationTests {
 
 	@Autowired
@@ -22,6 +22,7 @@ class GatewayApplicationTests {
 		ResponseEntity<OpenAPI> response = rest.getForEntity("/v3/api-docs", OpenAPI.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody().getPaths()).containsKeys("/dates/AvailableCountries", "/wizards/Elixirs");
+		assertThat(response.getBody().getInfo().getDescription()).isEqualTo("Gateway API In Test");
 	}
 
 }
