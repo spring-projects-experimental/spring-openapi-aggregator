@@ -17,7 +17,6 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.info.Info;
-import reactor.core.publisher.Mono;
 
 @Configuration
 @ConditionalOnBean(OpenApiAggregatorSpecs.class)
@@ -64,8 +63,8 @@ class AggregatorEndpoint implements InitializingBean {
 	}
 
 	@GetMapping("${spring.openapi.aggregator.path:/v3/api-docs}")
-	public Mono<OpenAPI> api() {
-		return Mono.just(api);
+	public OpenAPI api() {
+		return api;
 	}
 
 	@Override
