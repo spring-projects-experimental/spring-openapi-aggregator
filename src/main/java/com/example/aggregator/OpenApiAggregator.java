@@ -62,6 +62,7 @@ public class OpenApiAggregator {
 		for (String path : paths.keySet()) {
 			api.getPaths().addPathItem(path, paths.get(path));
 		}
+		merge(paths.getExtensions(), api.getPaths()::getExtensions,  api.getPaths()::setExtensions);
 		Components source = item.getComponents();
 		if (source != null) {
 			merge(source.getCallbacks(), target::getCallbacks, target::setCallbacks);
@@ -80,12 +81,10 @@ public class OpenApiAggregator {
 
 	private <T> void merge(Map<String, T> source, Supplier<Map<String, T>> getter, Consumer<Map<String, T>> setter) {
 		if (source != null) {
-			Map<String, T> target = getter.get();
-			if (target == null) {
-				target = new HashMap<>();
-				setter.accept(target);
+			if (getter.get() == null) {
+				setter.accept(new HashMap<>());
 			}
-			target.putAll(source);
+			getter.get().putAll(source);
 		}
 	}
 
