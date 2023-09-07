@@ -1,0 +1,77 @@
+{
+	"openapi": "3.0.1",
+	"info": {
+		"title": "OpenAPI definition",
+		"version": "v0"
+	},
+	"servers": [
+		{
+			"url": "http://localhost:8080",
+			"description": "Generated server url"
+		}
+	],
+	"tags": [
+		{
+			"name": "generated",
+			"description": "the generated API"
+		},
+		{
+			"name": "manual",
+			"description": "the manual API"
+		}
+	],
+	"paths": {
+		"/manual": {
+			"get": {
+				"tags": [
+					"manual"
+				],
+				"operationId": "message",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Model"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/generated": {
+			"get": {
+				"tags": [
+					"generated"
+				],
+				"operationId": "generatedGet",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Model"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"Model": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	}
+}

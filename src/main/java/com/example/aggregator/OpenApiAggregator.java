@@ -50,18 +50,20 @@ public class OpenApiAggregator {
 
 	private void merge(OpenAPI api, OpenAPI item) {
 		Paths paths = item.getPaths();
-		if (api.getPaths() == null) {
-			api.paths(new Paths());
+		if (paths != null) {
+			if (api.getPaths() == null) {
+				api.paths(new Paths());
+			}
+			for (String path : paths.keySet()) {
+				api.getPaths().addPathItem(path, paths.get(path));
+			}
+			merge(paths.getExtensions(), api.getPaths()::getExtensions, api.getPaths()::setExtensions);
 		}
 		Components target = api.getComponents();
 		if (target == null) {
 			target = new Components();
 			api.components(target);
 		}
-		for (String path : paths.keySet()) {
-			api.getPaths().addPathItem(path, paths.get(path));
-		}
-		merge(paths.getExtensions(), api.getPaths()::getExtensions,  api.getPaths()::setExtensions);
 		Components source = item.getComponents();
 		if (source != null) {
 			merge(source.getCallbacks(), target::getCallbacks, target::setCallbacks);

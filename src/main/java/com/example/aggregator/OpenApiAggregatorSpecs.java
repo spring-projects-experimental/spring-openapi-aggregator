@@ -17,6 +17,10 @@ public class OpenApiAggregatorSpecs {
 			this(UrlResource.from(uri), Function.identity());
 		}
 
+		public Spec(Resource resource) {
+			this(resource, Function.identity());
+		}
+
 		public Paths paths(Paths paths) {
 			return paths().apply(paths);
 		}
