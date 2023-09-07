@@ -8,22 +8,20 @@ import java.util.function.Supplier;
 import org.springframework.stereotype.Component;
 
 import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.parser.OpenAPIV3Parser;
 
 @Component
 public class OpenApiAggregator {
 
-	private final ObjectMapper mapper;
 	private final OpenApiAggregatorSpecs specs;
 	private final OpenAPI base;
 
-	public OpenApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper mapper, OpenAPI base) {
+	public OpenApiAggregator(OpenApiAggregatorSpecs specs, OpenAPI base) {
 		this.specs = specs;
-		this.mapper = mapper;
 		this.base = base;
 	}
 
@@ -38,7 +36,8 @@ public class OpenApiAggregator {
 			OpenAPI item;
 			try {
 				// Blocking...
-				item = mapper.readValue(spec.resource().getInputStream(), OpenAPI.class);
+				OpenAPIV3Parser parser = new OpenAPIV3Parser();
+				item = parser.read(spec.resource().getURL().toString());
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
 			}

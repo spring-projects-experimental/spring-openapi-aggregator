@@ -1,15 +1,9 @@
 {
-	"openapi": "3.0.1",
+	"swagger": "2.0",
 	"info": {
 		"title": "OpenAPI definition",
-		"version": "v1"
+		"version": "v0"
 	},
-	"servers": [
-		{
-			"url": "http://localhost:8080",
-			"description": "Generated server url"
-		}
-	],
 	"tags": [
 		{
 			"name": "generated",
@@ -27,15 +21,14 @@
 					"manual"
 				],
 				"operationId": "message",
+				"produces": [
+					"application/json"
+				],
 				"responses": {
 					"200": {
 						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Model"
-								}
-							}
+						"schema": {
+							"$ref": "#/definitions/Model"
 						}
 					}
 				}
@@ -50,26 +43,20 @@
 				"responses": {
 					"200": {
 						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Model"
-								}
-							}
+						"schema": {
+							"$ref": "#/definitions/Model"
 						}
 					}
 				}
 			}
 		}
 	},
-	"components": {
-		"schemas": {
-			"Model": {
-				"type": "object",
-				"properties": {
-					"name": {
-						"type": "string"
-					}
+	"definitions": {
+		"Model": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
 				}
 			}
 		}

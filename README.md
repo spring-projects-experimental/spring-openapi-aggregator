@@ -12,3 +12,5 @@ OpenApiAggregatorSpecs specs() {
 ```
 
 The aggregator will then expose a spec that combines the two APIs. The Wizards API will be prefixed with `/wizards` and the Dates API will be prefixed with `/dates` (with an additional removal of the `/api/v3` prefix from the backend). The sample application `GatewayApplication` does this and also exposes the APIs via a Spring Cloud Gateway, so the paths match the aggregated spec. You can run it with `./mvnw spring-boot:test-run` and browse the spec at http://localhost:8080/v3/api-docs.
+
+If any of the specs is Swagger (OpenAPI 2.0) instead of OpenAPI 3.0 the aggregator will automatically convert it to OpenAPI 3.0. OpenAPI 3.1 is not supported yet.
