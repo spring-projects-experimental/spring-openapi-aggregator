@@ -1,31 +1,30 @@
 package com.example.aggregator;
 
+import java.net.URI;
 import java.util.HashMap;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.info.Info;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Component
 public class OpenApiAggregator {
 
-	private final WebClient rest;
+	private final ObjectMapper mapper;
 	private OpenApiAggregatorSpecs specs;
 
-	OpenApiAggregator(OpenApiAggregatorSpecs specs, WebClient.Builder rest) {
+	OpenApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper mapper) {
 		this.specs = specs;
-		this.rest = rest.build();
+		this.mapper = mapper;
 	}
 
-	public Mono<OpenAPI> aggregate() {
+	public OpenAPI aggregate() {
 		OpenAPI api = new OpenAPI();
 		api.paths(new Paths());
 		api.components(new Components());
@@ -33,25 +32,27 @@ public class OpenApiAggregator {
 				.title("Gateway API")
 				.description("Gateway API")
 				.version("1.0.0"));
-		Flux<Spec> flux = Flux.fromIterable(specs.getSpecs());
-		return flux.flatMap(spec -> rest.get()
-				.uri(spec.uri())
-				.retrieve()
-				.bodyToMono(OpenAPI.class)
-				.map(item -> {
-					Paths paths = spec.paths(item.getPaths());
-					for (String path : paths.keySet()) {
-						api.getPaths().addPathItem(path, paths.get(path));
-					}
-					Components components = item.getComponents();
-					if (components != null && components.getSchemas() != null && api.getComponents().getSchemas() == null) {
-						api.getComponents().setSchemas(new HashMap<>());
-					}
-					for (String schema : components.getSchemas().keySet()) {
-						api.getComponents().getSchemas().put(schema, components.getSchemas().get(schema));
-					}
-					return api;
-				})).then(Mono.just(api));
+		for (Spec spec : specs.getSpecs()) {
+			OpenAPI item;
+			try {
+				// Blocking...
+				item = mapper.readValue(URI.create(spec.uri()).toURL(), OpenAPI.class);
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
+			}
+			Paths paths = spec.paths(item.getPaths());
+			for (String path : paths.keySet()) {
+				api.getPaths().addPathItem(path, paths.get(path));
+			}
+			Components components = item.getComponents();
+			if (components != null && components.getSchemas() != null && api.getComponents().getSchemas() == null) {
+				api.getComponents().setSchemas(new HashMap<>());
+			}
+			for (String schema : components.getSchemas().keySet()) {
+				api.getComponents().getSchemas().put(schema, components.getSchemas().get(schema));
+			}
+		}
+		return api;
 	}
 
 }

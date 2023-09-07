@@ -1,14 +1,15 @@
 package com.example.aggregator;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient.Builder;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import reactor.core.publisher.Mono;
@@ -24,7 +25,7 @@ public class OpenApiAggregatorConfiguration {
 	}
 
 	@Bean
-	public OpenApiAggregator openApiAggregator(OpenApiAggregatorSpecs specs, Builder rest) {
+	public OpenApiAggregator openApiAggregator(OpenApiAggregatorSpecs specs, ObjectMapper rest) {
 		return new OpenApiAggregator(specs, rest);
 	}
 
@@ -36,15 +37,21 @@ public class OpenApiAggregatorConfiguration {
 }
 
 @RestController
-class AggregatorEndpoint {
+class AggregatorEndpoint implements InitializingBean {
 	private final OpenApiAggregator aggregator;
+	private OpenAPI api;
 
 	public AggregatorEndpoint(OpenApiAggregator aggregator) {
 		this.aggregator = aggregator;
 	}
 
-	@GetMapping("/v3/api-docs")
+	@GetMapping("${spring.openapi.aggregator.path:/v3/api-docs}")
 	public Mono<OpenAPI> api() {
-		return aggregator.aggregate();
+		return Mono.just(api);
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		this.api = aggregator.aggregate();
 	}
 }
