@@ -2,40 +2,19 @@ package com.example.gateway;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.parser.ObjectMapperFactory;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
 public class OpenApiValidationTests {
 
-	private ObjectMapper mapper = ObjectMapperFactory.createJson();
-
-	static class SchemaMixin {
-		@JsonIgnore
-		public Set<String> types;
-		@JsonIgnore
-		public boolean exampleSetFlag;
-		@JsonIgnore
-		public Map<String, Object> jsonSchema;
-	}
-
-	{
-		mapper.setDefaultPropertyInclusion(
-				JsonInclude.Value.construct(JsonInclude.Include.NON_DEFAULT, JsonInclude.Include.NON_NULL));
-		mapper.addMixIn(Schema.class, SchemaMixin.class);
-	}
+	private ObjectMapper mapper = Json.mapper();
 
 	@Test
 	public void testValidate() throws Exception {
@@ -51,11 +30,9 @@ public class OpenApiValidationTests {
 		OpenAPI api = parser.read("src/test/resources/swagger.json", null, new ParseOptions());
 		assertThat(api).isNotNull();
 		assertThat(api.getPaths()).containsKeys("/generated", "/manual");
-		// System.err.println(mapper.writeValueAsString(api));
+		System.err.println(mapper.writeValueAsString(api));
 		SwaggerParseResult result = parser.readContents(mapper.writeValueAsString(api), null, new ParseOptions());
-		// Swagger parser adds invalid attributes (or they are not @JsonIgnored where
-		// they should be)
-		assertThat(result.getMessages()).containsExactly("attribute extensions is unexpected");
+		assertThat(result.getMessages()).isEmpty();
 	}
 
 	@Test

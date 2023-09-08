@@ -2,42 +2,27 @@ package com.example.gateway;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
 import com.example.aggregator.OpenApiAggregator;
 import com.example.aggregator.OpenApiAggregatorSpecs;
 import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.parser.ObjectMapperFactory;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
 public class OpenApiAggregatorTests {
 
-	private ObjectMapper mapper = ObjectMapperFactory.createJson();
+	private ObjectMapper mapper = Json.mapper();
 	private OpenAPI base = new OpenAPI();
 
-	static class SchemaMixin {
-		@JsonIgnore
-		public Set<String> types;
-		@JsonIgnore
-		boolean exampleSetFlag;
-	}
-
 	{
-		mapper.setDefaultPropertyInclusion(
-				JsonInclude.Value.construct(JsonInclude.Include.NON_DEFAULT, JsonInclude.Include.NON_NULL));
-		mapper.addMixIn(Schema.class, SchemaMixin.class);
 		base.setInfo(new Info().title("Test").version("v0"));
 	}
 
