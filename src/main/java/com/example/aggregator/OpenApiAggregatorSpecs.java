@@ -7,6 +7,7 @@ import java.util.function.Function;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
 
 public class OpenApiAggregatorSpecs {
@@ -32,6 +33,19 @@ public class OpenApiAggregatorSpecs {
 					result.addPathItem(prefix + path, paths.get(path));
 				}
 				return result;
+			}));
+		}
+
+		public Spec operationPrefix(String prefix) {
+			return new Spec(resource(), paths().andThen(paths -> {
+				for (String path : paths.keySet()) {
+					for (Operation operation : paths.get(path).readOperations()) {
+						if (operation.getOperationId() != null) {
+							operation.setOperationId(prefix + operation.getOperationId());
+						}
+					}
+				}
+				return paths;
 			}));
 		}
 

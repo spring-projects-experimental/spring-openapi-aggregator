@@ -52,16 +52,16 @@ public class OpenApiAggregatorTests {
 	public void testTwoVersions() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs()
-						.spec(new Spec(new ClassPathResource("openapi.json")).prefix("/v1"))
+						.spec(new Spec(new ClassPathResource("openapi.json")).prefix("/v1").operationPrefix("V1"))
 						.spec(new Spec(new ClassPathResource("openapi.json")).prefix("/v2")),
 				base);
 		OpenAPI api = aggregator.aggregate();
 		assertThat(api.getPaths()).containsKeys("/v1/generated", "/v1/manual");
 		assertThat(api.getPaths()).containsKeys("/v2/generated", "/v2/manual");
-		// TODO: fail if the operationIds are duplicated
+		assertThat(api.getPaths().get("/v1/manual").getGet().getOperationId()).startsWith("V1");
 		OpenAPIV3Parser parser = new OpenAPIV3Parser();
 		SwaggerParseResult result = parser.readContents(mapper.writeValueAsString(api), null, new ParseOptions());
-		assertThat(result.getMessages()).anyMatch(str -> str.contains("operationId is repeated"));
+		assertThat(result.getMessages()).isEmpty();
 	}
 
 }
