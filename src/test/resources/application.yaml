@@ -1,0 +1,7 @@
+spring:
+  openapi:
+    base:
+      info:
+        title: My API
+        description: My API description
+        version: 1.0.0
