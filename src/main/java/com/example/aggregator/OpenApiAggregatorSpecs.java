@@ -9,6 +9,7 @@ import java.util.function.Function;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
@@ -85,225 +86,6 @@ public class OpenApiAggregatorSpecs {
 
 	}
 
-	private static class SimpleSpecProcessor implements Function<OpenAPI, OpenAPI> {
-
-		private final Map<String, String> pathReplacements = new HashMap<>();
-		private final Map<String, String> operationReplacements = new HashMap<>();
-		private final Map<String, String> schemaReplacements = new HashMap<>();
-		private final Function<String, String> paths;
-		private final Function<String, String> operations;
-		private final Function<String, String> schemas;
-
-		public SimpleSpecProcessor(Function<String, String> paths, Function<String, String> operations,
-				Function<String, String> schemas) {
-			this.paths = paths;
-			this.operations = operations;
-			this.schemas = schemas;
-		}
-
-		@Override
-		public OpenAPI apply(OpenAPI source) {
-			Paths paths = new Paths();
-			for (String path : source.getPaths().keySet()) {
-				String newPath = this.paths.apply(path);
-				if (newPath != null) {
-					if (!newPath.equals(path)) {
-						pathReplacements.put(path, newPath);
-					}
-					paths.addPathItem(newPath, source.getPaths().get(path));
-				}
-				for (Operation operation : source.getPaths().get(path).readOperations()) {
-					if (operation.getOperationId() != null) {
-						String newOperation = this.operations.apply(operation.getOperationId());
-						if (newOperation != null) {
-							if (!newOperation.equals(operation.getOperationId())) {
-								operationReplacements.put(operation.getOperationId(), newOperation);
-							}
-							operation.setOperationId(newOperation);
-						}
-					}
-				}
-			}
-			source.setPaths(paths);
-			if (source.getComponents() != null && source.getComponents().getSchemas() != null) {
-				@SuppressWarnings("rawtypes")
-				Map<String, Schema> schemas = new HashMap<>(source.getComponents().getSchemas());
-				for (String schema : schemas.keySet()) {
-					String newSchema = this.schemas.apply(schema);
-					if (newSchema != null) {
-						if (!newSchema.equals(schema)) {
-							schemaReplacements.put(schema, newSchema);
-						}
-						Schema<?> value = source.getComponents().getSchemas().remove(schema);
-						source.getComponents().getSchemas().put(newSchema, value);
-					}
-
-				}
-			}
-			for (String path : source.getPaths().keySet()) {
-				for (Operation operation : source.getPaths().get(path).readOperations()) {
-					RequestBody body = operation.getRequestBody();
-					if (body != null) {
-						if (body.getContent() != null) {
-							for (String type : body.getContent().keySet()) {
-								Schema<?> schema = body.getContent().get(type).getSchema();
-								if (schema != null) {
-									if (schema.get$ref() != null) {
-										String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
-										if (newSchema != null) {
-											schema.set$ref(schemaPath(newSchema));
-										}
-									}
-									if (schema.getProperties() != null) {
-										for (String property : schema.getProperties().keySet()) {
-											Schema<?> propertySchema = schema.getProperties().get(property);
-											if (propertySchema.get$ref() != null) {
-												String newSchema = schemaReplacements.get(propertySchema.get$ref());
-												if (newSchema != null) {
-													propertySchema.set$ref(newSchema);
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-					if (operation.getResponses() != null) {
-						for (String key : operation.getResponses().keySet()) {
-							ApiResponse response = operation.getResponses().get(key);
-							if (response.getLinks() != null) {
-								for (String link : response.getLinks().keySet()) {
-									if (response.getLinks().get(link).getOperationId() != null) {
-										String newOperation = operationReplacements
-												.get(response.getLinks().get(link).getOperationId());
-										if (newOperation != null) {
-											response.getLinks().get(link).setOperationId(newOperation);
-										}
-									}
-								}
-							}
-							if (response.getContent() != null) {
-								for (String type : response.getContent().keySet()) {
-									Schema<?> schema = response.getContent().get(type).getSchema();
-									if (schema != null) {
-										if (schema.get$ref() != null) {
-											String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
-											if (newSchema != null) {
-												schema.set$ref(schemaPath(newSchema));
-											}
-										}
-										if (schema.getProperties() != null) {
-											for (String property : schema.getProperties().keySet()) {
-												Schema<?> propertySchema = schema.getProperties().get(property);
-												if (propertySchema.get$ref() != null) {
-													String newSchema = schemaReplacements.get(propertySchema.get$ref());
-													if (newSchema != null) {
-														propertySchema.set$ref(newSchema);
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			if (source.getComponents() != null && source.getComponents().getLinks() != null) {
-				for (String key : source.getComponents().getLinks().keySet()) {
-					Link link = source.getComponents().getLinks().get(key);
-					if (link.getOperationId() != null) {
-						String newOperation = operationReplacements
-								.get(link.getOperationId());
-						if (newOperation != null) {
-							link.setOperationId(newOperation);
-						}
-					}
-					if (link.getOperationRef() != null) {
-						String path = extractPath(link.getOperationRef());
-						if (pathReplacements.containsKey(path)) {
-							link.setOperationRef(replacePath(link.getOperationRef(), pathReplacements.get(path)));
-						}
-					}
-				}
-			}
-			if (source.getComponents() != null && source.getComponents().getRequestBodies() != null) {
-				for (String key : source.getComponents().getRequestBodies().keySet()) {
-					RequestBody body = source.getComponents().getRequestBodies().get(key);
-					if (body != null) {
-						if (body.getContent() != null) {
-							for (String type : body.getContent().keySet()) {
-								Schema<?> schema = body.getContent().get(type).getSchema();
-								if (schema != null) {
-									if (schema.get$ref() != null) {
-										String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
-										if (newSchema != null) {
-											schema.set$ref(schemaPath(newSchema));
-										}
-									}
-									if (schema.getProperties() != null) {
-										for (String property : schema.getProperties().keySet()) {
-											Schema<?> propertySchema = schema.getProperties().get(property);
-											if (propertySchema.get$ref() != null) {
-												String newSchema = schemaReplacements.get(propertySchema.get$ref());
-												if (newSchema != null) {
-													propertySchema.set$ref(newSchema);
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			if (source.getComponents() != null && source.getComponents().getResponses() != null) {
-				for (String key : source.getComponents().getResponses().keySet()) {
-					ApiResponse response = source.getComponents().getResponses().get(key);
-					if (response.getLinks() != null) {
-						for (String link : response.getLinks().keySet()) {
-							if (response.getLinks().get(link).getOperationId() != null) {
-								String newOperation = operationReplacements
-										.get(response.getLinks().get(link).getOperationId());
-								if (newOperation != null) {
-									response.getLinks().get(link).setOperationId(newOperation);
-								}
-							}
-						}
-					}
-					if (response.getContent() != null) {
-						for (String type : response.getContent().keySet()) {
-							Schema<?> schema = response.getContent().get(type).getSchema();
-							if (schema != null) {
-								if (schema.get$ref() != null) {
-									String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
-									if (newSchema != null) {
-										schema.set$ref(schemaPath(newSchema));
-									}
-								}
-								if (schema.getProperties() != null) {
-									for (String property : schema.getProperties().keySet()) {
-										Schema<?> propertySchema = schema.getProperties().get(property);
-										if (propertySchema.get$ref() != null) {
-											String newSchema = schemaReplacements.get(propertySchema.get$ref());
-											if (newSchema != null) {
-												propertySchema.set$ref(newSchema);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			return source;
-		}
-	}
-
 	private Set<Spec> specs = new HashSet<>();
 
 	public Set<Spec> getSpecs() {
@@ -348,4 +130,175 @@ public class OpenApiAggregatorSpecs {
 	private static String modelName(String schema) {
 		return schema.replace("#/components/schemas/", "").replace("~1", "/");
 	}
+
+	private static class SimpleSpecProcessor implements Function<OpenAPI, OpenAPI> {
+
+		private final Map<String, String> pathReplacements = new HashMap<>();
+		private final Map<String, String> operationReplacements = new HashMap<>();
+		private final Map<String, String> schemaReplacements = new HashMap<>();
+		private final Function<String, String> paths;
+		private final Function<String, String> operations;
+		private final Function<String, String> schemas;
+
+		public SimpleSpecProcessor(Function<String, String> paths, Function<String, String> operations,
+				Function<String, String> schemas) {
+			this.paths = paths;
+			this.operations = operations;
+			this.schemas = schemas;
+		}
+
+		@Override
+		public OpenAPI apply(OpenAPI source) {
+			source.setPaths(transformPaths(source.getPaths()));
+			source.setComponents(transformComponents(source.getComponents()));
+			for (String path : source.getPaths().keySet()) {
+				for (Operation operation : source.getPaths().get(path).readOperations()) {
+					RequestBody body = operation.getRequestBody();
+					if (body != null) {
+						if (body.getContent() != null) {
+							for (String type : body.getContent().keySet()) {
+								Schema<?> schema = body.getContent().get(type).getSchema();
+								transformSchema(schema);
+							}
+						}
+					}
+					if (operation.getResponses() != null) {
+						for (String key : operation.getResponses().keySet()) {
+							ApiResponse response = operation.getResponses().get(key);
+							transformResponse(response);
+						}
+					}
+				}
+			}
+			if (source.getComponents() != null && source.getComponents().getLinks() != null) {
+				for (String key : source.getComponents().getLinks().keySet()) {
+					Link link = source.getComponents().getLinks().get(key);
+					transformLink(link);
+				}
+			}
+			if (source.getComponents() != null && source.getComponents().getRequestBodies() != null) {
+				for (String key : source.getComponents().getRequestBodies().keySet()) {
+					RequestBody body = source.getComponents().getRequestBodies().get(key);
+					if (body != null) {
+						if (body.getContent() != null) {
+							for (String type : body.getContent().keySet()) {
+								Schema<?> schema = body.getContent().get(type).getSchema();
+								transformSchema(schema);
+							}
+						}
+					}
+				}
+			}
+			if (source.getComponents() != null && source.getComponents().getResponses() != null) {
+				for (String key : source.getComponents().getResponses().keySet()) {
+					ApiResponse response = source.getComponents().getResponses().get(key);
+					transformResponse(response);
+				}
+			}
+			return source;
+		}
+
+		private Components transformComponents(Components source) {
+			if (source != null && source.getSchemas() != null) {
+				@SuppressWarnings("rawtypes")
+				Map<String, Schema> schemas = new HashMap<>(source.getSchemas());
+				for (String schema : schemas.keySet()) {
+					String newSchema = this.schemas.apply(schema);
+					if (newSchema != null) {
+						if (!newSchema.equals(schema)) {
+							schemaReplacements.put(schema, newSchema);
+							Schema<?> value = source.getSchemas().remove(schema);
+							source.getSchemas().put(newSchema, value);
+						}
+					}
+
+				}
+			}
+			return source;
+		}
+
+		private Paths transformPaths(Paths source) {
+			Paths paths = new Paths();
+			for (String path : source.keySet()) {
+				String newPath = this.paths.apply(path);
+				if (newPath != null) {
+					if (!newPath.equals(path)) {
+						pathReplacements.put(path, newPath);
+					}
+					paths.addPathItem(newPath, source.get(path));
+				}
+				for (Operation operation : source.get(path).readOperations()) {
+					if (operation.getOperationId() != null) {
+						String newOperation = this.operations.apply(operation.getOperationId());
+						if (newOperation != null) {
+							if (!newOperation.equals(operation.getOperationId())) {
+								operationReplacements.put(operation.getOperationId(), newOperation);
+							}
+							operation.setOperationId(newOperation);
+						}
+					}
+				}
+			}
+			return paths;
+		}
+
+		private void transformLink(Link link) {
+			if (link.getOperationId() != null) {
+				String newOperation = operationReplacements
+						.get(link.getOperationId());
+				if (newOperation != null) {
+					link.setOperationId(newOperation);
+				}
+			}
+			if (link.getOperationRef() != null) {
+				String path = extractPath(link.getOperationRef());
+				if (pathReplacements.containsKey(path)) {
+					link.setOperationRef(replacePath(link.getOperationRef(), pathReplacements.get(path)));
+				}
+			}
+		}
+
+		private void transformSchema(Schema<?> schema) {
+			if (schema != null) {
+				if (schema.get$ref() != null) {
+					String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
+					if (newSchema != null) {
+						schema.set$ref(schemaPath(newSchema));
+					}
+				}
+				if (schema.getProperties() != null) {
+					for (String property : schema.getProperties().keySet()) {
+						Schema<?> propertySchema = schema.getProperties().get(property);
+						if (propertySchema.get$ref() != null) {
+							String newSchema = schemaReplacements.get(propertySchema.get$ref());
+							if (newSchema != null) {
+								propertySchema.set$ref(newSchema);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		private void transformResponse(ApiResponse response) {
+			if (response.getLinks() != null) {
+				for (String link : response.getLinks().keySet()) {
+					if (response.getLinks().get(link).getOperationId() != null) {
+						String newOperation = operationReplacements
+								.get(response.getLinks().get(link).getOperationId());
+						if (newOperation != null) {
+							response.getLinks().get(link).setOperationId(newOperation);
+						}
+					}
+				}
+			}
+			if (response.getContent() != null) {
+				for (String type : response.getContent().keySet()) {
+					Schema<?> schema = response.getContent().get(type).getSchema();
+					transformSchema(schema);
+				}
+			}
+		}
+	}
+
 }
