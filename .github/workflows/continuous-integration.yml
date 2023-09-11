@@ -23,11 +23,7 @@ jobs:
         env:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        run: ./mvnw -s settings.xml -Pintegration-tests --batch-mode --update-snapshots deploy
+        run: ./mvnw -s settings.xml --batch-mode --update-snapshots deploy
 
       - name: Generate Java docs
         run: ./mvnw javadoc:aggregate
-
-      - name: Generate Reference docs
-        working-directory: spring-ai-docs
-        run: ./mvnw site

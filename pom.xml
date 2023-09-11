@@ -92,9 +92,9 @@
 	</organization>
 
 	<scm>
-		<url>https://github.com/spring-projects/spring-guice</url>
-		<connection>scm:git:git://github.com/spring-projects/spring-guice.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/spring-projects/spring-guice.git</developerConnection>
+		<url>https://github.com/spring-projects/spring-openapi-aggregator</url>
+		<connection>scm:git:git://github.com/spring-projects/spring-openapi-aggregator.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/spring-projects/spring-openapi-aggregator.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -131,10 +131,10 @@ limitations under the License.
 	</licenses>
 
 	<distributionManagement>
-		<downloadUrl>https://github.com/spring-projects/spring-guice</downloadUrl>
+		<downloadUrl>https://github.com/spring-projects/spring-openapi-aggregator</downloadUrl>
 		<site>
 			<id>spring-docs</id>
-			<url>scp://static.springframework.org/var/www/domains/springframework.org/static/htdocs/spring-guice/docs/${project.artifactId}/${project.version}</url>
+			<url>scp://static.springframework.org/var/www/domains/springframework.org/static/htdocs/spring-openapi-aggregator/docs/${project.artifactId}/${project.version}</url>
 		</site>
 		<repository>
 			<id>sonatype-nexus-staging</id>
