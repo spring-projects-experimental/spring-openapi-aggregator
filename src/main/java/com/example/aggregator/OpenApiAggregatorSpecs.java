@@ -14,6 +14,7 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.links.Link;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class OpenApiAggregatorSpecs {
@@ -129,6 +130,33 @@ public class OpenApiAggregatorSpecs {
 			}
 			for (String path : source.getPaths().keySet()) {
 				for (Operation operation : source.getPaths().get(path).readOperations()) {
+					RequestBody body = operation.getRequestBody();
+					if (body != null) {
+						if (body.getContent() != null) {
+							for (String type : body.getContent().keySet()) {
+								Schema<?> schema = body.getContent().get(type).getSchema();
+								if (schema != null) {
+									if (schema.get$ref() != null) {
+										String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
+										if (newSchema != null) {
+											schema.set$ref(schemaPath(newSchema));
+										}
+									}
+									if (schema.getProperties() != null) {
+										for (String property : schema.getProperties().keySet()) {
+											Schema<?> propertySchema = schema.getProperties().get(property);
+											if (propertySchema.get$ref() != null) {
+												String newSchema = schemaReplacements.get(propertySchema.get$ref());
+												if (newSchema != null) {
+													propertySchema.set$ref(newSchema);
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 					if (operation.getResponses() != null) {
 						for (String key : operation.getResponses().keySet()) {
 							ApiResponse response = operation.getResponses().get(key);
@@ -185,6 +213,37 @@ public class OpenApiAggregatorSpecs {
 						String path = extractPath(link.getOperationRef());
 						if (pathReplacements.containsKey(path)) {
 							link.setOperationRef(replacePath(link.getOperationRef(), pathReplacements.get(path)));
+						}
+					}
+				}
+			}
+			if (source.getComponents() != null && source.getComponents().getRequestBodies() != null) {
+				for (String key : source.getComponents().getRequestBodies().keySet()) {
+					RequestBody body = source.getComponents().getRequestBodies().get(key);
+					if (body != null) {
+						if (body.getContent() != null) {
+							for (String type : body.getContent().keySet()) {
+								Schema<?> schema = body.getContent().get(type).getSchema();
+								if (schema != null) {
+									if (schema.get$ref() != null) {
+										String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
+										if (newSchema != null) {
+											schema.set$ref(schemaPath(newSchema));
+										}
+									}
+									if (schema.getProperties() != null) {
+										for (String property : schema.getProperties().keySet()) {
+											Schema<?> propertySchema = schema.getProperties().get(property);
+											if (propertySchema.get$ref() != null) {
+												String newSchema = schemaReplacements.get(propertySchema.get$ref());
+												if (newSchema != null) {
+													propertySchema.set$ref(newSchema);
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}

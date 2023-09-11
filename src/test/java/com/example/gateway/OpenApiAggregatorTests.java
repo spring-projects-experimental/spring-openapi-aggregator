@@ -49,6 +49,24 @@ public class OpenApiAggregatorTests {
 	}
 
 	@Test
+	public void testRequestBody() throws Exception {
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("posts.json")).schemaPrefix("V1")),
+				base);
+		OpenAPI api = aggregator.aggregate();
+		// System.err.println(mapper.writeValueAsString(api));
+		assertThat(api.getComponents().getSchemas().get("V1Model")).isNotNull();
+		assertThat(
+				api.getPaths().get("/manual").getPost().getResponses().get("200").getContent().get("application/json")
+						.getSchema().get$ref())
+				.isEqualTo("#/components/schemas/V1Model");
+		assertThat(api.getPaths().get("/manual").getPost().getRequestBody().getContent().get("application/json")
+				.getSchema().get$ref()).isEqualTo("#/components/schemas/V1Model");
+		assertThat(api.getComponents().getRequestBodies().get("Model").getContent().get("application/json")
+				.getSchema().get$ref()).isEqualTo("#/components/schemas/V1Model");
+	}
+
+	@Test
 	public void testSchemaPrefix() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("schemas.json")).schemaPrefix("V1")),
