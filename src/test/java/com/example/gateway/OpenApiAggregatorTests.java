@@ -3,7 +3,6 @@ package com.example.gateway;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 
 import com.example.aggregator.OpenApiAggregator;
@@ -51,7 +50,6 @@ public class OpenApiAggregatorTests {
 
 	@Test
 	public void testOperationPrefixComponentsLinksOperationId() throws Exception {
-		// System.err.println(new ByteArrayResource("foo".getBytes()).getURL());
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("links.json")).operationPrefix("v1")),
 				base);
@@ -62,7 +60,6 @@ public class OpenApiAggregatorTests {
 
 	@Test
 	public void testOperationPrefixComponentsLinksOperationRef() throws Exception {
-		// System.err.println(new ByteArrayResource("foo".getBytes()).getURL());
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("links.json")).prefix("/v1")),
 				base);
