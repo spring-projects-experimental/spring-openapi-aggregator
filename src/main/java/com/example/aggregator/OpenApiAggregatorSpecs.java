@@ -19,31 +19,30 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class OpenApiAggregatorSpecs {
 
-	public record Spec(Resource resource, Function<String, String> paths, Function<String, String> operations,
-			Function<String, String> schemas) {
+	public record Spec(Resource resource, OpenApiFilter filter) {
 
 		public Spec(String uri) {
-			this(UrlResource.from(uri), Function.identity(), Function.identity(), Function.identity());
+			this(UrlResource.from(uri), api -> api);
 		}
 
 		public Spec(Resource resource) {
-			this(resource, Function.identity(), Function.identity(), Function.identity());
+			this(resource, api -> api);
 		}
 
-		public SpecProcessor processor() {
-			return new SimpleSpecProcessor(this);
+		public Spec filter(OpenApiFilter filter) {
+			return new Spec(resource(), new OpenApiFilterChain(filter(), filter));
 		}
 
 		public Spec paths(Function<String, String> paths) {
-			return new Spec(resource(), paths().andThen(paths), operations(), schemas());
+			return new Spec(resource(), new OpenApiFilterChain(filter(), pathFilter(paths)));
 		}
 
 		public Spec operations(Function<String, String> operations) {
-			return new Spec(resource(), paths(), operations().andThen(operations), schemas());
+			return new Spec(resource(), new OpenApiFilterChain(filter(), operationFilter(operations)));
 		}
 
 		public Spec schemas(Function<String, String> schemas) {
-			return new Spec(resource(), paths(), operations(), schemas().andThen(schemas));
+			return new Spec(resource(), new OpenApiFilterChain(filter(), schemaFilter(schemas)));
 		}
 
 		public Spec prefix(String prefix) {
@@ -72,28 +71,56 @@ public class OpenApiAggregatorSpecs {
 			return schemas(schema -> prefix + schema);
 		}
 
+		private static OpenApiFilter pathFilter(Function<String, String> paths) {
+			return new SimpleSpecProcessor(paths, Function.identity(), Function.identity());
+		}
+
+		private static OpenApiFilter operationFilter(Function<String, String> operations) {
+			return new SimpleSpecProcessor(Function.identity(), operations, Function.identity());
+		}
+
+		private static OpenApiFilter schemaFilter(Function<String, String> schemas) {
+			return new SimpleSpecProcessor(Function.identity(), Function.identity(), schemas);
+		}
+
 	}
 
-	interface SpecProcessor {
-		OpenAPI apply(OpenAPI source);
-	}
-
-	private static class SimpleSpecProcessor implements SpecProcessor {
+	private static class SimpleSpecProcessor implements OpenApiFilter {
 
 		private final Map<String, String> pathReplacements = new HashMap<>();
 		private final Map<String, String> operationReplacements = new HashMap<>();
 		private final Map<String, String> schemaReplacements = new HashMap<>();
-		private final Spec spec;
+		private final Function<String, String> paths;
+		private final Function<String, String> operations;
+		private final Function<String, String> schemas;
 
-		private SimpleSpecProcessor(Spec spec) {
-			this.spec = spec;
+		public SimpleSpecProcessor(Function<String, String> paths, Function<String, String> operations,
+				Function<String, String> schemas) {
+			this.paths = paths;
+			this.operations = operations;
+			this.schemas = schemas;
 		}
 
 		@Override
-		public OpenAPI apply(OpenAPI source) {
+		public Map<String, String> getPathMappings() {
+			return pathReplacements;
+		}
+
+		@Override
+		public Map<String, String> getOperationMappings() {
+			return operationReplacements;
+		}
+
+		@Override
+		public Map<String, String> getSchemaMappings() {
+			return schemaReplacements;
+		}
+
+		@Override
+		public OpenAPI filter(OpenAPI source) {
 			Paths paths = new Paths();
 			for (String path : source.getPaths().keySet()) {
-				String newPath = spec.paths().apply(path);
+				String newPath = this.paths.apply(path);
 				if (newPath != null) {
 					if (!newPath.equals(path)) {
 						pathReplacements.put(path, newPath);
@@ -102,7 +129,7 @@ public class OpenApiAggregatorSpecs {
 				}
 				for (Operation operation : source.getPaths().get(path).readOperations()) {
 					if (operation.getOperationId() != null) {
-						String newOperation = spec.operations().apply(operation.getOperationId());
+						String newOperation = this.operations.apply(operation.getOperationId());
 						if (newOperation != null) {
 							if (!newOperation.equals(operation.getOperationId())) {
 								operationReplacements.put(operation.getOperationId(), newOperation);
@@ -117,7 +144,7 @@ public class OpenApiAggregatorSpecs {
 				@SuppressWarnings("rawtypes")
 				Map<String, Schema> schemas = new HashMap<>(source.getComponents().getSchemas());
 				for (String schema : schemas.keySet()) {
-					String newSchema = spec.schemas().apply(schema);
+					String newSchema = this.schemas.apply(schema);
 					if (newSchema != null) {
 						if (!newSchema.equals(schema)) {
 							schemaReplacements.put(schema, newSchema);

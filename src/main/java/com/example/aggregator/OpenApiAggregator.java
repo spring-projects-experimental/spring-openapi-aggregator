@@ -41,7 +41,7 @@ public class OpenApiAggregator {
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
-			merge(api, spec.processor().apply(item));
+			merge(api, spec.filter().filter(item));
 		}
 		return api;
 	}
