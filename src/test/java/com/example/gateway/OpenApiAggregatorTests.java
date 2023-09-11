@@ -49,12 +49,37 @@ public class OpenApiAggregatorTests {
 	}
 
 	@Test
+	public void testSchemaPrefix() throws Exception {
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("schemas.json")).schemaPrefix("V1")),
+				base);
+		OpenAPI api = aggregator.aggregate();
+		// System.err.println(mapper.writeValueAsString(api));
+		assertThat(api.getComponents().getSchemas().get("V1Model")).isNotNull();
+		assertThat(api.getPaths().get("/manual").getGet().getResponses().get("200").getContent().get("application/json")
+				.getSchema().get$ref()).isEqualTo("#/components/schemas/V1Model");
+	}
+
+	@Test
+	public void testSchemaPrefixResponses() throws Exception {
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("schemas.json")).schemaPrefix("V1")),
+				base);
+		OpenAPI api = aggregator.aggregate();
+		// System.err.println(mapper.writeValueAsString(api));
+		assertThat(api.getComponents().getSchemas().get("V1Error")).isNotNull();
+		assertThat(api.getComponents().getResponses().get("NotFound").getContent().get("application/json")
+				.getSchema().get$ref()).isEqualTo("#/components/schemas/V1Error");
+	}
+
+	@Test
 	public void testOperationPrefixComponentsLinksOperationId() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("links.json")).operationPrefix("v1")),
 				base);
 		OpenAPI api = aggregator.aggregate();
-		assertThat(api.getPaths().get("/manual").getGet().getResponses().get("200").getLinks().get("message").get$ref()).isEqualTo("#/components/links/message");
+		assertThat(api.getPaths().get("/manual").getGet().getResponses().get("200").getLinks().get("message").get$ref())
+				.isEqualTo("#/components/links/message");
 		assertThat(api.getComponents().getLinks().get("message").getOperationId()).isEqualTo("v1message");
 	}
 
@@ -64,8 +89,10 @@ public class OpenApiAggregatorTests {
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("links.json")).prefix("/v1")),
 				base);
 		OpenAPI api = aggregator.aggregate();
-		assertThat(api.getPaths().get("/v1/manual").getGet().getResponses().get("200").getLinks().get("messageRef").get$ref()).isEqualTo("#/components/links/messageRef");
-		assertThat(api.getComponents().getLinks().get("messageRef").getOperationRef()).isEqualTo("#/paths/~1v1~1manual/get");
+		assertThat(api.getPaths().get("/v1/manual").getGet().getResponses().get("200").getLinks().get("messageRef")
+				.get$ref()).isEqualTo("#/components/links/messageRef");
+		assertThat(api.getComponents().getLinks().get("messageRef").getOperationRef())
+				.isEqualTo("#/paths/~1v1~1manual/get");
 	}
 
 	@Test

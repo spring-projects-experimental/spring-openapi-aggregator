@@ -9,51 +9,66 @@ import java.util.function.Function;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
-import io.swagger.parser.util.PathUtils;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.links.Link;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class OpenApiAggregatorSpecs {
 
-	public record Spec(Resource resource, Function<String, String> paths, Function<String, String> operations) {
+	public record Spec(Resource resource, Function<String, String> paths, Function<String, String> operations,
+			Function<String, String> schemas) {
 
 		public Spec(String uri) {
-			this(UrlResource.from(uri), Function.identity(), Function.identity());
+			this(UrlResource.from(uri), Function.identity(), Function.identity(), Function.identity());
 		}
 
 		public Spec(Resource resource) {
-			this(resource, Function.identity(), Function.identity());
+			this(resource, Function.identity(), Function.identity(), Function.identity());
 		}
 
 		public SpecProcessor processor() {
 			return new SimpleSpecProcessor(this);
 		}
 
+		public Spec paths(Function<String, String> paths) {
+			return new Spec(resource(), paths().andThen(paths), operations(), schemas());
+		}
+
+		public Spec operations(Function<String, String> operations) {
+			return new Spec(resource(), paths(), operations().andThen(operations), schemas());
+		}
+
+		public Spec schemas(Function<String, String> schemas) {
+			return new Spec(resource(), paths(), operations(), schemas().andThen(schemas));
+		}
+
 		public Spec prefix(String prefix) {
-			return new Spec(resource(), paths().andThen(path -> {
-				return prefix + path;
-			}), operations());
+			return paths(path -> prefix + path);
 		}
 
 		public Spec replace(String pattern, String replacement) {
-			return new Spec(resource(), paths().andThen(path -> {
+			return paths(path -> {
 				if (path.contains(pattern)) {
 					return path.replace(pattern, replacement);
 				}
 				return path;
-			}), operations());
+			});
 		}
 
 		public Spec operationPrefix(String prefix) {
-			return new Spec(resource(), paths(), operations().andThen(operation -> {
+			return operations(operation -> {
 				if (operation != null) {
 					return prefix + operation;
 				}
 				return operation;
-			}));
+			});
+		}
+
+		public Spec schemaPrefix(String prefix) {
+			return schemas(schema -> prefix + schema);
 		}
 
 	}
@@ -66,6 +81,7 @@ public class OpenApiAggregatorSpecs {
 
 		private final Map<String, String> pathReplacements = new HashMap<>();
 		private final Map<String, String> operationReplacements = new HashMap<>();
+		private final Map<String, String> schemaReplacements = new HashMap<>();
 		private final Spec spec;
 
 		private SimpleSpecProcessor(Spec spec) {
@@ -96,10 +112,25 @@ public class OpenApiAggregatorSpecs {
 				}
 			}
 			source.setPaths(paths);
+			if (source.getComponents() != null && source.getComponents().getSchemas() != null) {
+				@SuppressWarnings("rawtypes")
+				Map<String, Schema> schemas = new HashMap<>(source.getComponents().getSchemas());
+				for (String schema : schemas.keySet()) {
+					String newSchema = spec.schemas().apply(schema);
+					if (newSchema != null) {
+						if (!newSchema.equals(schema)) {
+							schemaReplacements.put(schema, newSchema);
+						}
+						Schema<?> value = source.getComponents().getSchemas().remove(schema);
+						source.getComponents().getSchemas().put(newSchema, value);
+					}
+
+				}
+			}
 			for (String path : source.getPaths().keySet()) {
 				for (Operation operation : source.getPaths().get(path).readOperations()) {
 					if (operation.getResponses() != null) {
-						for (Object key : operation.getResponses().keySet()) {
+						for (String key : operation.getResponses().keySet()) {
 							ApiResponse response = operation.getResponses().get(key);
 							if (response.getLinks() != null) {
 								for (String link : response.getLinks().keySet()) {
@@ -112,12 +143,36 @@ public class OpenApiAggregatorSpecs {
 									}
 								}
 							}
+							if (response.getContent() != null) {
+								for (String type : response.getContent().keySet()) {
+									Schema<?> schema = response.getContent().get(type).getSchema();
+									if (schema != null) {
+										if (schema.get$ref() != null) {
+											String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
+											if (newSchema != null) {
+												schema.set$ref(schemaPath(newSchema));
+											}
+										}
+										if (schema.getProperties() != null) {
+											for (String property : schema.getProperties().keySet()) {
+												Schema<?> propertySchema = schema.getProperties().get(property);
+												if (propertySchema.get$ref() != null) {
+													String newSchema = schemaReplacements.get(propertySchema.get$ref());
+													if (newSchema != null) {
+														propertySchema.set$ref(newSchema);
+													}
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
 			}
 			if (source.getComponents() != null && source.getComponents().getLinks() != null) {
-				for (Object key : source.getComponents().getLinks().keySet()) {
+				for (String key : source.getComponents().getLinks().keySet()) {
 					Link link = source.getComponents().getLinks().get(key);
 					if (link.getOperationId() != null) {
 						String newOperation = operationReplacements
@@ -130,6 +185,46 @@ public class OpenApiAggregatorSpecs {
 						String path = extractPath(link.getOperationRef());
 						if (pathReplacements.containsKey(path)) {
 							link.setOperationRef(replacePath(link.getOperationRef(), pathReplacements.get(path)));
+						}
+					}
+				}
+			}
+			if (source.getComponents() != null && source.getComponents().getResponses() != null) {
+				for (String key : source.getComponents().getResponses().keySet()) {
+					ApiResponse response = source.getComponents().getResponses().get(key);
+					if (response.getLinks() != null) {
+						for (String link : response.getLinks().keySet()) {
+							if (response.getLinks().get(link).getOperationId() != null) {
+								String newOperation = operationReplacements
+										.get(response.getLinks().get(link).getOperationId());
+								if (newOperation != null) {
+									response.getLinks().get(link).setOperationId(newOperation);
+								}
+							}
+						}
+					}
+					if (response.getContent() != null) {
+						for (String type : response.getContent().keySet()) {
+							Schema<?> schema = response.getContent().get(type).getSchema();
+							if (schema != null) {
+								if (schema.get$ref() != null) {
+									String newSchema = schemaReplacements.get(modelName(schema.get$ref()));
+									if (newSchema != null) {
+										schema.set$ref(schemaPath(newSchema));
+									}
+								}
+								if (schema.getProperties() != null) {
+									for (String property : schema.getProperties().keySet()) {
+										Schema<?> propertySchema = schema.getProperties().get(property);
+										if (propertySchema.get$ref() != null) {
+											String newSchema = schemaReplacements.get(propertySchema.get$ref());
+											if (newSchema != null) {
+												propertySchema.set$ref(newSchema);
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -173,5 +268,13 @@ public class OpenApiAggregatorSpecs {
 			path = path.substring(0, path.indexOf("/"));
 		}
 		return path.replace("~1", "/");
+	}
+
+	private static String schemaPath(String schema) {
+		return "#/components/schemas/" + schema.replace("/", "~1");
+	}
+
+	private static String modelName(String schema) {
+		return schema.replace("#/components/schemas/", "").replace("~1", "/");
 	}
 }
