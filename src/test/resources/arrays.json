@@ -1,0 +1,65 @@
+{
+	"openapi": "3.0.1",
+	"info": {
+		"title": "OpenAPI definition",
+		"version": "v1"
+	},
+	"paths": {
+		"/manual": {
+			"post": {
+				"tags": [
+					"manual"
+				],
+				"operationId": "message",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Model"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/Model"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"Model": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			},
+			"Models": {
+				"type": "object",
+				"properties": {
+					"values": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Model"
+						}
+					}
+				}
+			}
+
+		}
+	}
+}

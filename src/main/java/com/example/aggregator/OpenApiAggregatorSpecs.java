@@ -108,7 +108,7 @@ public class OpenApiAggregatorSpecs {
 	}
 
 	public OpenApiAggregatorSpecs filter(Function<OpenAPI, OpenAPI> filter) {
-		this.filter =  this.filter.andThen(filter);
+		this.filter = this.filter.andThen(filter);
 		return this;
 	}
 
@@ -187,6 +187,12 @@ public class OpenApiAggregatorSpecs {
 					transformLink(link);
 				}
 			}
+			if (source.getComponents() != null && source.getComponents().getSchemas() != null) {
+				for (String key : source.getComponents().getSchemas().keySet()) {
+					Schema<?> schema = source.getComponents().getSchemas().get(key);
+					transformSchema(schema);
+				}
+			}
 			if (source.getComponents() != null && source.getComponents().getRequestBodies() != null) {
 				for (String key : source.getComponents().getRequestBodies().keySet()) {
 					RequestBody body = source.getComponents().getRequestBodies().get(key);
@@ -215,14 +221,11 @@ public class OpenApiAggregatorSpecs {
 				Map<String, Schema> schemas = new HashMap<>(source.getSchemas());
 				for (String schema : schemas.keySet()) {
 					String newSchema = this.schemas.apply(schema);
-					if (newSchema != null) {
-						if (!newSchema.equals(schema)) {
-							schemaReplacements.put(schema, newSchema);
-							Schema<?> value = source.getSchemas().remove(schema);
-							source.getSchemas().put(newSchema, value);
-						}
+					if (newSchema != null && !newSchema.equals(schema)) {
+						schemaReplacements.put(schema, newSchema);
+						Schema<?> value = source.getSchemas().remove(schema);
+						source.getSchemas().put(newSchema, value);
 					}
-
 				}
 			}
 			return source;
@@ -280,13 +283,12 @@ public class OpenApiAggregatorSpecs {
 				if (schema.getProperties() != null) {
 					for (String property : schema.getProperties().keySet()) {
 						Schema<?> propertySchema = schema.getProperties().get(property);
-						if (propertySchema.get$ref() != null) {
-							String newSchema = schemaReplacements.get(propertySchema.get$ref());
-							if (newSchema != null) {
-								propertySchema.set$ref(newSchema);
-							}
-						}
+						transformSchema(propertySchema);
 					}
+				}
+				if (schema.getItems() != null) {
+					Schema<?> itemSchema = schema.getItems();
+					transformSchema(itemSchema);
 				}
 			}
 		}

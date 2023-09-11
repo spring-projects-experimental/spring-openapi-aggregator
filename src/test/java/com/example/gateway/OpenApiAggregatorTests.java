@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
@@ -79,6 +80,18 @@ public class OpenApiAggregatorTests {
 	}
 
 	@Test
+	public void testArraysInSchemaProperties() throws Exception {
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("arrays.json")).schemaPrefix("V1")),
+				base);
+		OpenAPI api = aggregator.aggregate();
+		// System.err.println(mapper.writeValueAsString(api));
+		assertThat(api.getComponents().getSchemas().get("V1Models")).isNotNull();
+		Schema<?> schema = (Schema<?>) api.getComponents().getSchemas().get("V1Models").getProperties().get("values");
+		assertThat(schema.getItems().get$ref()).isEqualTo("#/components/schemas/V1Model");
+	}
+
+	@Test
 	public void testSchemaPrefix() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("schemas.json")).schemaPrefix("V1")),
@@ -88,6 +101,18 @@ public class OpenApiAggregatorTests {
 		assertThat(api.getComponents().getSchemas().get("V1Model")).isNotNull();
 		assertThat(api.getPaths().get("/manual").getGet().getResponses().get("200").getContent().get("application/json")
 				.getSchema().get$ref()).isEqualTo("#/components/schemas/V1Model");
+	}
+
+	@Test
+	public void testSchemaPrefixArray() throws Exception {
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("arrays.json")).schemaPrefix("V1")),
+				base);
+		OpenAPI api = aggregator.aggregate();
+		// System.err.println(mapper.writeValueAsString(api));
+		assertThat(api.getComponents().getSchemas().get("V1Model")).isNotNull();
+		assertThat(api.getPaths().get("/manual").getPost().getResponses().get("200").getContent().get("application/json")
+				.getSchema().getItems().get$ref()).isEqualTo("#/components/schemas/V1Model");
 	}
 
 	@Test
@@ -129,13 +154,16 @@ public class OpenApiAggregatorTests {
 	public void testTwoVersions() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs()
-						.spec(new Spec(new ClassPathResource("openapi.json")).prefix("/v1").operationPrefix("V1"))
+						.spec(new Spec(new ClassPathResource("openapi.json")).prefix("/v1").operationPrefix("V1")
+								.schemaPrefix("V1"))
 						.spec(new Spec(new ClassPathResource("openapi.json")).prefix("/v2")),
 				base);
 		OpenAPI api = aggregator.aggregate();
 		assertThat(api.getPaths()).containsKeys("/v1/generated", "/v1/manual");
 		assertThat(api.getPaths()).containsKeys("/v2/generated", "/v2/manual");
 		assertThat(api.getPaths().get("/v1/manual").getGet().getOperationId()).startsWith("V1");
+		assertThat(api.getPaths().get("/v1/manual").getGet().getResponses().get("200").getContent()
+				.get("application/json").getSchema().get$ref()).isEqualTo("#/components/schemas/V1Model");
 		OpenAPIV3Parser parser = new OpenAPIV3Parser();
 		SwaggerParseResult result = parser.readContents(mapper.writeValueAsString(api), null, new ParseOptions());
 		assertThat(result.getMessages()).isEmpty();

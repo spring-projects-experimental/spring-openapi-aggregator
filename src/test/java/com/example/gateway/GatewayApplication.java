@@ -37,8 +37,10 @@ public class GatewayApplication {
 	@Bean
 	OpenApiAggregatorSpecs specs() {
 		return new OpenApiAggregatorSpecs()
-				.spec(new Spec(dates + "/swagger/v3/swagger.json").replace("/api/v3", "/dates"))
-				.spec(new Spec(wizards + "/swagger/v1/swagger.json").prefix("/wizards"));
+				.spec(new Spec(dates + "/swagger/v3/swagger.json").replace("/api/v3", "/dates")
+						.schemas(schema -> schema.endsWith("Dto") ? schema.substring(0, schema.length() - 3) : schema))
+				.spec(new Spec(wizards + "/swagger/v1/swagger.json").prefix("/wizards")
+						.schemas(schema -> schema.endsWith("Dto") ? schema.substring(0, schema.length() - 3) : schema));
 	}
 
 }
