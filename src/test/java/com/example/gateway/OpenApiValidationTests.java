@@ -29,7 +29,7 @@ public class OpenApiValidationTests {
 	public void testValidateLinks() throws Exception {
 		OpenAPIV3Parser parser = new OpenAPIV3Parser();
 		SwaggerParseResult api = parser.readLocation("src/test/resources/links.json", null, new ParseOptions());
-		System.err.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(api.getOpenAPI()));
+		// System.err.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(api.getOpenAPI()));
 		assertThat(api.getMessages()).isEmpty();
 	}
 
@@ -39,7 +39,7 @@ public class OpenApiValidationTests {
 		OpenAPI api = parser.read("src/test/resources/swagger.json", null, new ParseOptions());
 		assertThat(api).isNotNull();
 		assertThat(api.getPaths()).containsKeys("/generated", "/manual");
-		System.err.println(mapper.writeValueAsString(api));
+		// System.err.println(mapper.writeValueAsString(api));
 		SwaggerParseResult result = parser.readContents(mapper.writeValueAsString(api), null, new ParseOptions());
 		assertThat(result.getMessages()).isEmpty();
 	}

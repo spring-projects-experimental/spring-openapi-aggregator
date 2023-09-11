@@ -19,7 +19,7 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class OpenApiAggregatorSpecs {
 
-	public record Spec(Resource resource, OpenApiFilter filter) {
+	public record Spec(Resource resource, Function<OpenAPI, OpenAPI> filter) {
 
 		public Spec(String uri) {
 			this(UrlResource.from(uri), api -> api);
@@ -29,20 +29,20 @@ public class OpenApiAggregatorSpecs {
 			this(resource, api -> api);
 		}
 
-		public Spec filter(OpenApiFilter filter) {
-			return new Spec(resource(), new OpenApiFilterChain(filter(), filter));
+		public Spec filter(Function<OpenAPI, OpenAPI> filter) {
+			return new Spec(resource(), filter().andThen(filter));
 		}
 
 		public Spec paths(Function<String, String> paths) {
-			return new Spec(resource(), new OpenApiFilterChain(filter(), pathFilter(paths)));
+			return filter(pathFilter(paths));
 		}
 
 		public Spec operations(Function<String, String> operations) {
-			return new Spec(resource(), new OpenApiFilterChain(filter(), operationFilter(operations)));
+			return filter(operationFilter(operations));
 		}
 
 		public Spec schemas(Function<String, String> schemas) {
-			return new Spec(resource(), new OpenApiFilterChain(filter(), schemaFilter(schemas)));
+			return filter(schemaFilter(schemas));
 		}
 
 		public Spec prefix(String prefix) {
@@ -71,21 +71,21 @@ public class OpenApiAggregatorSpecs {
 			return schemas(schema -> prefix + schema);
 		}
 
-		private static OpenApiFilter pathFilter(Function<String, String> paths) {
+		private static Function<OpenAPI, OpenAPI> pathFilter(Function<String, String> paths) {
 			return new SimpleSpecProcessor(paths, Function.identity(), Function.identity());
 		}
 
-		private static OpenApiFilter operationFilter(Function<String, String> operations) {
+		private static Function<OpenAPI, OpenAPI> operationFilter(Function<String, String> operations) {
 			return new SimpleSpecProcessor(Function.identity(), operations, Function.identity());
 		}
 
-		private static OpenApiFilter schemaFilter(Function<String, String> schemas) {
+		private static Function<OpenAPI, OpenAPI> schemaFilter(Function<String, String> schemas) {
 			return new SimpleSpecProcessor(Function.identity(), Function.identity(), schemas);
 		}
 
 	}
 
-	private static class SimpleSpecProcessor implements OpenApiFilter {
+	private static class SimpleSpecProcessor implements Function<OpenAPI, OpenAPI> {
 
 		private final Map<String, String> pathReplacements = new HashMap<>();
 		private final Map<String, String> operationReplacements = new HashMap<>();
@@ -102,22 +102,7 @@ public class OpenApiAggregatorSpecs {
 		}
 
 		@Override
-		public Map<String, String> getPathMappings() {
-			return pathReplacements;
-		}
-
-		@Override
-		public Map<String, String> getOperationMappings() {
-			return operationReplacements;
-		}
-
-		@Override
-		public Map<String, String> getSchemaMappings() {
-			return schemaReplacements;
-		}
-
-		@Override
-		public OpenAPI filter(OpenAPI source) {
+		public OpenAPI apply(OpenAPI source) {
 			Paths paths = new Paths();
 			for (String path : source.getPaths().keySet()) {
 				String newPath = this.paths.apply(path);
