@@ -88,6 +88,8 @@ public class OpenApiAggregatorSpecs {
 
 	private Set<Spec> specs = new HashSet<>();
 
+	private Function<OpenAPI, OpenAPI> filter = Function.identity();
+
 	public Set<Spec> getSpecs() {
 		return this.specs;
 	}
@@ -98,6 +100,15 @@ public class OpenApiAggregatorSpecs {
 
 	public OpenApiAggregatorSpecs spec(Spec spec) {
 		this.specs.add(spec);
+		return this;
+	}
+
+	public Function<OpenAPI, OpenAPI> getFilter() {
+		return filter;
+	}
+
+	public OpenApiAggregatorSpecs filter(Function<OpenAPI, OpenAPI> filter) {
+		this.filter =  this.filter.andThen(filter);
 		return this;
 	}
 

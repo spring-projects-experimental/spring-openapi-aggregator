@@ -49,6 +49,18 @@ public class OpenApiAggregatorTests {
 	}
 
 	@Test
+	public void testFilter() {
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().filter(api -> {
+					api.setInfo(new Info().title("Test").version("v0"));
+					return api;
+				}),
+				new OpenAPI());
+		OpenAPI api = aggregator.aggregate();
+		assertThat(api.getInfo().getTitle()).isEqualTo("Test");
+	}
+
+	@Test
 	public void testRequestBody() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("posts.json")).schemaPrefix("V1")),

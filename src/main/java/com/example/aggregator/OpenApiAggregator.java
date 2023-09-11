@@ -43,7 +43,7 @@ public class OpenApiAggregator {
 			}
 			merge(api, spec.filter().apply(item));
 		}
-		return api;
+		return specs.getFilter().apply(api);
 	}
 
 	private void merge(OpenAPI api, OpenAPI item) {
