@@ -1,0 +1,33 @@
+name: CI/CD build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven and deploy to Artifactory
+        env:
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: mvn -s settings.xml -Pintegration-tests --batch-mode --update-snapshots deploy
+
+      - name: Generate Java docs
+        run: mvn javadoc:aggregate
+
+      - name: Generate Reference docs
+        working-directory: spring-ai-docs
+        run: mvn site

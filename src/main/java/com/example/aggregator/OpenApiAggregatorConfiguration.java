@@ -35,10 +35,7 @@ public class OpenApiAggregatorConfiguration {
 		OpenAPI api = new OpenAPI();
 		api.paths(new Paths());
 		api.components(new Components());
-		api.info(new Info()
-				.title("Gateway API")
-				.description("Gateway API")
-				.version("1.0.0"));
+		api.info(new Info().title("Gateway API").description("Gateway API").version("1.0.0"));
 		return api;
 	}
 
@@ -51,21 +48,25 @@ public class OpenApiAggregatorConfiguration {
 
 @RestController
 class AggregatorEndpoint implements InitializingBean {
+
 	private final OpenApiAggregator aggregator;
+
 	private OpenAPI api;
+
 	private final ObjectMapper mapper = Json.mapper();
-	
+
 	public AggregatorEndpoint(OpenApiAggregator aggregator) {
 		this.aggregator = aggregator;
 		mapper.setDefaultPropertyInclusion(
 				JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_DEFAULT));
 	}
 
-	@GetMapping(path = "${spring.openapi.aggregator.path:/v3/api-docs}", produces = {"application/json"})
+	@GetMapping(path = "${spring.openapi.aggregator.path:/v3/api-docs}", produces = { "application/json" })
 	public String api() {
 		try {
 			return mapper.writeValueAsString(api);
-		} catch (JsonProcessingException e) {
+		}
+		catch (JsonProcessingException e) {
 			throw new IllegalStateException(e);
 		}
 	}
@@ -74,4 +75,5 @@ class AggregatorEndpoint implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		this.api = aggregator.aggregate();
 	}
+
 }

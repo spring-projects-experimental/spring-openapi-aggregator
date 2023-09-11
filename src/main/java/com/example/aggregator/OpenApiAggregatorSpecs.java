@@ -145,10 +145,15 @@ public class OpenApiAggregatorSpecs {
 	private static class SimpleSpecProcessor implements Function<OpenAPI, OpenAPI> {
 
 		private final Map<String, String> pathReplacements = new HashMap<>();
+
 		private final Map<String, String> operationReplacements = new HashMap<>();
+
 		private final Map<String, String> schemaReplacements = new HashMap<>();
+
 		private final Function<String, String> paths;
+
 		private final Function<String, String> operations;
+
 		private final Function<String, String> schemas;
 
 		public SimpleSpecProcessor(Function<String, String> paths, Function<String, String> operations,
@@ -258,8 +263,7 @@ public class OpenApiAggregatorSpecs {
 
 		private void transformLink(Link link) {
 			if (link.getOperationId() != null) {
-				String newOperation = operationReplacements
-						.get(link.getOperationId());
+				String newOperation = operationReplacements.get(link.getOperationId());
 				if (newOperation != null) {
 					link.setOperationId(newOperation);
 				}
@@ -297,8 +301,7 @@ public class OpenApiAggregatorSpecs {
 			if (response.getLinks() != null) {
 				for (String link : response.getLinks().keySet()) {
 					if (response.getLinks().get(link).getOperationId() != null) {
-						String newOperation = operationReplacements
-								.get(response.getLinks().get(link).getOperationId());
+						String newOperation = operationReplacements.get(response.getLinks().get(link).getOperationId());
 						if (newOperation != null) {
 							response.getLinks().get(link).setOperationId(newOperation);
 						}
@@ -312,6 +315,7 @@ public class OpenApiAggregatorSpecs {
 				}
 			}
 		}
+
 	}
 
 }

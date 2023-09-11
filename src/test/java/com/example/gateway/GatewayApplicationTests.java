@@ -15,7 +15,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.openapi.base.info.description=Gateway API In Test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+		properties = "spring.openapi.base.info.description=Gateway API In Test")
 class GatewayApplicationTests {
 
 	private ObjectMapper mapper = Json.mapper();

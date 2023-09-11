@@ -13,6 +13,7 @@ import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
 public class GatewayApplication {
 
 	private String dates = "https://date.nager.at";
+
 	private String wizards = "https://wizard-world-api.herokuapp.com";
 
 	public static void main(String[] args) {
@@ -21,26 +22,19 @@ public class GatewayApplication {
 
 	@Bean
 	RouteLocator gateway(RouteLocatorBuilder rlb) {
-		return rlb
-				.routes()
-				.route(r -> r
-						.path("/dates/**")
-						.filters(f -> f.stripPrefix(1).prefixPath("/api/v3"))
-						.uri(dates))
-				.route(r -> r
-						.path("/wizards/**")
-						.filters(f -> f.stripPrefix(1))
-						.uri(wizards))
-				.build();
+		return rlb.routes()
+			.route(r -> r.path("/dates/**").filters(f -> f.stripPrefix(1).prefixPath("/api/v3")).uri(dates))
+			.route(r -> r.path("/wizards/**").filters(f -> f.stripPrefix(1)).uri(wizards))
+			.build();
 	}
 
 	@Bean
 	OpenApiAggregatorSpecs specs() {
 		return new OpenApiAggregatorSpecs()
-				.spec(new Spec(dates + "/swagger/v3/swagger.json").replace("/api/v3", "/dates")
-						.schemas(schema -> schema.endsWith("Dto") ? schema.substring(0, schema.length() - 3) : schema))
-				.spec(new Spec(wizards + "/swagger/v1/swagger.json").prefix("/wizards")
-						.schemas(schema -> schema.endsWith("Dto") ? schema.substring(0, schema.length() - 3) : schema));
+			.spec(new Spec(dates + "/swagger/v3/swagger.json").replace("/api/v3", "/dates")
+				.schemas(schema -> schema.endsWith("Dto") ? schema.substring(0, schema.length() - 3) : schema))
+			.spec(new Spec(wizards + "/swagger/v1/swagger.json").prefix("/wizards")
+				.schemas(schema -> schema.endsWith("Dto") ? schema.substring(0, schema.length() - 3) : schema));
 	}
 
 }

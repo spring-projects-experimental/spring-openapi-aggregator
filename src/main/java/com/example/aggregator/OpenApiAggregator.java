@@ -18,6 +18,7 @@ import io.swagger.v3.parser.OpenAPIV3Parser;
 public class OpenApiAggregator {
 
 	private final OpenApiAggregatorSpecs specs;
+
 	private final OpenAPI base;
 
 	public OpenApiAggregator(OpenApiAggregatorSpecs specs, OpenAPI base) {
@@ -38,7 +39,8 @@ public class OpenApiAggregator {
 				// Blocking...
 				OpenAPIV3Parser parser = new OpenAPIV3Parser();
 				item = parser.read(spec.resource().getURL().toString());
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
 			merge(api, spec.filter().apply(item));
