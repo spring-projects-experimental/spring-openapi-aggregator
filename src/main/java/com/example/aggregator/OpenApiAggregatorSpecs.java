@@ -12,6 +12,7 @@ import org.springframework.core.io.UrlResource;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class OpenApiAggregatorSpecs {
 
@@ -59,7 +60,7 @@ public class OpenApiAggregatorSpecs {
 		OpenAPI apply(OpenAPI source);
 	}
 
-	private static class SimpleSpecProcessor implements SpecProcessor{
+	private static class SimpleSpecProcessor implements SpecProcessor {
 
 		private final Map<String, String> pathReplacements = new HashMap<>();
 		private final Map<String, String> operationReplacements = new HashMap<>();
@@ -93,6 +94,37 @@ public class OpenApiAggregatorSpecs {
 				}
 			}
 			source.setPaths(paths);
+			for (String path : source.getPaths().keySet()) {
+				for (Operation operation : source.getPaths().get(path).readOperations()) {
+					if (operation.getResponses() != null) {
+						for (Object key : operation.getResponses().keySet()) {
+							ApiResponse response = operation.getResponses().get(key);
+							if (response.getLinks() != null) {
+								for (String link : response.getLinks().keySet()) {
+									if (response.getLinks().get(link).getOperationId() != null) {
+										String newOperation = operationReplacements
+												.get(response.getLinks().get(link).getOperationId());
+										if (newOperation != null) {
+											response.getLinks().get(link).setOperationId(newOperation);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (source.getComponents() != null && source.getComponents().getLinks() != null) {
+				for (Object key : source.getComponents().getLinks().keySet()) {
+					if (source.getComponents().getLinks().get(key).getOperationId() != null) {
+						String newOperation = operationReplacements
+								.get(source.getComponents().getLinks().get(key).getOperationId());
+						if (newOperation != null) {
+							source.getComponents().getLinks().get(key).setOperationId(newOperation);
+						}
+					}
+				}
+			}
 			return source;
 		}
 	}

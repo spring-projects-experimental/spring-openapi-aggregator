@@ -23,7 +23,7 @@
 						},
 						"links": {
 							"message": {
-								"$ref": "#/components/links/messageRef"
+								"$ref": "#/components/links/message"
 							}
 						}
 					}
