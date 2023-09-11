@@ -24,6 +24,9 @@
 						"links": {
 							"message": {
 								"$ref": "#/components/links/message"
+							},
+							"messageRef": {
+								"$ref": "#/components/links/messageRef"
 							}
 						}
 					}

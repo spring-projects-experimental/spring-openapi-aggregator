@@ -61,6 +61,17 @@ public class OpenApiAggregatorTests {
 	}
 
 	@Test
+	public void testOperationPrefixComponentsLinksOperationRef() throws Exception {
+		// System.err.println(new ByteArrayResource("foo".getBytes()).getURL());
+		OpenApiAggregator aggregator = new OpenApiAggregator(
+				new OpenApiAggregatorSpecs().spec(new Spec(new ClassPathResource("links.json")).prefix("/v1")),
+				base);
+		OpenAPI api = aggregator.aggregate();
+		assertThat(api.getPaths().get("/v1/manual").getGet().getResponses().get("200").getLinks().get("messageRef").get$ref()).isEqualTo("#/components/links/messageRef");
+		assertThat(api.getComponents().getLinks().get("messageRef").getOperationRef()).isEqualTo("#/paths/~1v1~1manual/get");
+	}
+
+	@Test
 	public void testTwoVersions() throws Exception {
 		OpenApiAggregator aggregator = new OpenApiAggregator(
 				new OpenApiAggregatorSpecs()

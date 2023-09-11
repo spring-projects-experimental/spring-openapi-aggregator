@@ -9,9 +9,11 @@ import java.util.function.Function;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
+import io.swagger.parser.util.PathUtils;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.links.Link;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class OpenApiAggregatorSpecs {
@@ -116,11 +118,18 @@ public class OpenApiAggregatorSpecs {
 			}
 			if (source.getComponents() != null && source.getComponents().getLinks() != null) {
 				for (Object key : source.getComponents().getLinks().keySet()) {
-					if (source.getComponents().getLinks().get(key).getOperationId() != null) {
+					Link link = source.getComponents().getLinks().get(key);
+					if (link.getOperationId() != null) {
 						String newOperation = operationReplacements
-								.get(source.getComponents().getLinks().get(key).getOperationId());
+								.get(link.getOperationId());
 						if (newOperation != null) {
-							source.getComponents().getLinks().get(key).setOperationId(newOperation);
+							link.setOperationId(newOperation);
+						}
+					}
+					if (link.getOperationRef() != null) {
+						String path = extractPath(link.getOperationRef());
+						if (pathReplacements.containsKey(path)) {
+							link.setOperationRef(replacePath(link.getOperationRef(), pathReplacements.get(path)));
 						}
 					}
 				}
@@ -142,5 +151,27 @@ public class OpenApiAggregatorSpecs {
 	public OpenApiAggregatorSpecs spec(Spec spec) {
 		this.specs.add(spec);
 		return this;
+	}
+
+	private static String replacePath(String operationRef, String newPath) {
+		String path = operationRef;
+		if (path.contains("~1")) {
+			path = path.substring(path.indexOf("~1"));
+		}
+		if (path.contains("/")) {
+			path = path.substring(0, path.indexOf("/"));
+		}
+		return operationRef.replace(path, newPath.replace("/", "~1"));
+	}
+
+	private static String extractPath(String operationRef) {
+		String path = operationRef;
+		if (path.contains("~1")) {
+			path = path.substring(path.indexOf("~1"));
+		}
+		if (path.contains("/")) {
+			path = path.substring(0, path.indexOf("/"));
+		}
+		return path.replace("~1", "/");
 	}
 }
