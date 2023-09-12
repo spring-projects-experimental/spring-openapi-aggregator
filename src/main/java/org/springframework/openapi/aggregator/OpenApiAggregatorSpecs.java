@@ -34,38 +34,100 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 
+/**
+ * Specifies how to transform OpenAPI specs during an aggregation.
+ */
 public class OpenApiAggregatorSpecs {
 
+	/**
+	 * A spec to describe how to locate and transform an OpenAPI descriptor.
+	 */
 	public record Spec(Resource resource, Function<OpenAPI, OpenAPI> filter) {
 
+		/**
+		 * Create a new {@link Spec} instance with no transformation.
+		 * 
+		 * @param uri the location of the API descriptor (e.g. a file or URL)
+		 */
 		public Spec(String uri) {
 			this(UrlResource.from(uri), api -> api);
 		}
 
+		/**
+		 * Create a new {@link Spec} instance with no transformation.
+		 * 
+		 * @param resource the location of the API descriptor (e.g. a file or URL)
+		 */
 		public Spec(Resource resource) {
 			this(resource, api -> api);
 		}
 
+		/**
+		 * Filter the API descriptor, in addition to any other transformations already
+		 * specified.
+		 * 
+		 * @param filter the filter to apply
+		 * @return a new instance
+		 */
 		public Spec filter(Function<OpenAPI, OpenAPI> filter) {
 			return new Spec(resource(), filter().andThen(filter));
 		}
 
+		/**
+		 * Modify the paths in the API descriptor. Only the URL path is modified, not
+		 * the rest of the path object, so that changes can be tracked and used to
+		 * refactor links in the rest of the descriptor.
+		 * 
+		 * @param paths a function to transform the URL paths
+		 * @return a new instance
+		 */
 		public Spec paths(Function<String, String> paths) {
 			return filter(pathFilter(paths));
 		}
 
+		/**
+		 * Modify the operation ids in the API descriptor. Only the operation id is
+		 * modified, not
+		 * the rest of the path object, so that changes can be tracked and used to
+		 * refactor links in the rest of the descriptor.
+		 * 
+		 * @param paths a function to transform the operation ids
+		 * @return a new instance
+		 */
 		public Spec operations(Function<String, String> operations) {
 			return filter(operationFilter(operations));
 		}
 
+		/**
+		 * Modify the schema names in the API descriptor. Only the schema name is
+		 * modified, not
+		 * the rest of the object, so that changes can be tracked and used to
+		 * refactor schemas and properties in the rest of the descriptor.
+		 * 
+		 * @param paths a function to transform the schema names
+		 * @return a new instance
+		 */
 		public Spec schemas(Function<String, String> schemas) {
 			return filter(schemaFilter(schemas));
 		}
 
+		/**
+		 * Prefix all paths in the API descriptor.
+		 * 
+		 * @param prefix the prefix to apply
+		 * @return a new instance
+		 */
 		public Spec prefix(String prefix) {
 			return paths(path -> prefix + path);
 		}
 
+		/**
+		 * Replace all the specified pattern in all paths in the API descriptor.
+		 * 
+		 * @param pattern the pattern to replace
+		 * @param replacement the replacement
+		 * @return a new instance
+		 */
 		public Spec replace(String pattern, String replacement) {
 			return paths(path -> {
 				if (path.contains(pattern)) {
@@ -75,6 +137,12 @@ public class OpenApiAggregatorSpecs {
 			});
 		}
 
+		/**
+		 * Prefix all operation ids in the API descriptor.
+		 * 
+		 * @param prefix the prefix to apply
+		 * @return a new instance
+		 */
 		public Spec operationPrefix(String prefix) {
 			return operations(operation -> {
 				if (operation != null) {
@@ -84,6 +152,12 @@ public class OpenApiAggregatorSpecs {
 			});
 		}
 
+		/**
+		 * Prefix all schema names in the API descriptor.
+		 * 
+		 * @param prefix the prefix to apply
+		 * @return a new instance
+		 */
 		public Spec schemaPrefix(String prefix) {
 			return schemas(schema -> prefix + schema);
 		}
@@ -131,6 +205,12 @@ public class OpenApiAggregatorSpecs {
 
 	public OpenApiAggregatorSpecs filter(Function<OpenAPI, OpenAPI> filter) {
 		this.filter = this.filter.andThen(filter);
+		return this;
+	}
+
+	public OpenApiAggregatorSpecs processor(BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> processor) {
+		BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> existing = this.processor;
+		this.processor = (api, items) -> processor.apply(existing.apply(api, items), items);
 		return this;
 	}
 
