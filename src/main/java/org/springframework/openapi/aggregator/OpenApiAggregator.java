@@ -74,8 +74,7 @@ public class OpenApiAggregator {
 			// Item might be mutated here. Maybe take a defensive clone copy?
 			merge(api, spec.filter().apply(item));
 		}
-		api = specs.getProcessor().apply(api, apis);
-		return specs.getFilter().apply(api);
+		return specs.getProcessor().apply(api, apis);
 	}
 
 	private void merge(OpenAPI api, OpenAPI item) {

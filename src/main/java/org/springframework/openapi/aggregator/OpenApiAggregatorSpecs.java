@@ -178,8 +178,6 @@ public class OpenApiAggregatorSpecs {
 
 	private Set<Spec> specs = new LinkedHashSet<>();
 
-	private Function<OpenAPI, OpenAPI> filter = Function.identity();
-
 	private BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> processor = (api, items) -> api;
 
 	public Set<Spec> getSpecs() {
@@ -195,17 +193,8 @@ public class OpenApiAggregatorSpecs {
 		return this;
 	}
 
-	public Function<OpenAPI, OpenAPI> getFilter() {
-		return filter;
-	}
-
 	public BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> getProcessor() {
 		return processor;
-	}
-
-	public OpenApiAggregatorSpecs filter(Function<OpenAPI, OpenAPI> filter) {
-		this.filter = this.filter.andThen(filter);
-		return this;
 	}
 
 	public OpenApiAggregatorSpecs processor(BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> processor) {
