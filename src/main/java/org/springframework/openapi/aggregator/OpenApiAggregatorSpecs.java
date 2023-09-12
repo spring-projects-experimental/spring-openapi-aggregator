@@ -46,7 +46,6 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Create a new {@link Spec} instance with no transformation.
-		 * 
 		 * @param uri the location of the API descriptor (e.g. a file or URL)
 		 */
 		public Spec(String uri) {
@@ -55,7 +54,6 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Create a new {@link Spec} instance with no transformation.
-		 * 
 		 * @param resource the location of the API descriptor (e.g. a file or URL)
 		 */
 		public Spec(Resource resource) {
@@ -65,7 +63,6 @@ public class OpenApiAggregatorSpecs {
 		/**
 		 * Filter the API descriptor, in addition to any other transformations already
 		 * specified.
-		 * 
 		 * @param filter the filter to apply
 		 * @return a new instance
 		 */
@@ -74,10 +71,9 @@ public class OpenApiAggregatorSpecs {
 		}
 
 		/**
-		 * Modify the paths in the API descriptor. Only the URL path is modified, not
-		 * the rest of the path object, so that changes can be tracked and used to
-		 * refactor links in the rest of the descriptor.
-		 * 
+		 * Modify the paths in the API descriptor. Only the URL path is modified, not the
+		 * rest of the path object, so that changes can be tracked and used to refactor
+		 * links in the rest of the descriptor.
 		 * @param paths a function to transform the URL paths
 		 * @return a new instance
 		 */
@@ -87,11 +83,9 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Modify the operation ids in the API descriptor. Only the operation id is
-		 * modified, not
-		 * the rest of the path object, so that changes can be tracked and used to
-		 * refactor links in the rest of the descriptor.
-		 * 
-		 * @param paths a function to transform the operation ids
+		 * modified, not the rest of the path object, so that changes can be tracked and
+		 * used to refactor links in the rest of the descriptor.
+		 * @param operations a function to transform the operation ids
 		 * @return a new instance
 		 */
 		public Spec operations(Function<String, String> operations) {
@@ -100,11 +94,9 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Modify the schema names in the API descriptor. Only the schema name is
-		 * modified, not
-		 * the rest of the object, so that changes can be tracked and used to
-		 * refactor schemas and properties in the rest of the descriptor.
-		 * 
-		 * @param paths a function to transform the schema names
+		 * modified, not the rest of the object, so that changes can be tracked and used
+		 * to refactor schemas and properties in the rest of the descriptor.
+		 * @param schemas a function to transform the schema names
 		 * @return a new instance
 		 */
 		public Spec schemas(Function<String, String> schemas) {
@@ -113,7 +105,6 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Prefix all paths in the API descriptor.
-		 * 
 		 * @param prefix the prefix to apply
 		 * @return a new instance
 		 */
@@ -123,7 +114,6 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Replace all the specified pattern in all paths in the API descriptor.
-		 * 
 		 * @param pattern the pattern to replace
 		 * @param replacement the replacement
 		 * @return a new instance
@@ -139,7 +129,6 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Prefix all operation ids in the API descriptor.
-		 * 
 		 * @param prefix the prefix to apply
 		 * @return a new instance
 		 */
@@ -154,7 +143,6 @@ public class OpenApiAggregatorSpecs {
 
 		/**
 		 * Prefix all schema names in the API descriptor.
-		 * 
 		 * @param prefix the prefix to apply
 		 * @return a new instance
 		 */
@@ -180,23 +168,47 @@ public class OpenApiAggregatorSpecs {
 
 	private BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> processor = (api, items) -> api;
 
+	/**
+	 * The specs in the aggregator.
+	 * @return the specs
+	 */
 	public Set<Spec> getSpecs() {
 		return this.specs;
 	}
 
+	/**
+	 * Set specs to apply in the aggregator.
+	 * @param specs the specs to set
+	 */
 	public void setSpecs(Set<Spec> specs) {
 		this.specs = specs;
 	}
 
+	/**
+	 * Add a spec to the aggregator.
+	 * @param spec the spec to add
+	 * @return this instance
+	 */
 	public OpenApiAggregatorSpecs spec(Spec spec) {
 		this.specs.add(spec);
 		return this;
 	}
 
+	/**
+	 * The processor to apply after the specs have been aggregated.
+	 * @return the processor
+	 */
 	public BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> getProcessor() {
 		return processor;
 	}
 
+	/**
+	 * Add a processor to the aggregator. The processor is applied after the specs with
+	 * the current result and the set of filtered specs. Additional processors can be
+	 * added and will be applied after this one.
+	 * @param processor the processor to add
+	 * @return this instance
+	 */
 	public OpenApiAggregatorSpecs processor(BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> processor) {
 		BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> existing = this.processor;
 		this.processor = (api, items) -> processor.apply(existing.apply(api, items), items);
