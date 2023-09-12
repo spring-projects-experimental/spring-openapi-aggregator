@@ -3,6 +3,7 @@ package org.springframework.openapi.aggregator;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +41,7 @@ public class OpenApiAggregatorConfiguration {
 	}
 
 	@Bean
+	@ConditionalOnWebApplication
 	public AggregatorEndpoint aggregatorEndpoint(OpenApiAggregator aggregator) {
 		return new AggregatorEndpoint(aggregator);
 	}
