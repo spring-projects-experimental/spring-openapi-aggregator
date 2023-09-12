@@ -1,4 +1,4 @@
-package com.example.gateway;
+package org.springframework.openapi.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +17,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 		properties = "spring.openapi.base.info.description=Gateway API In Test")
-class GatewayApplicationTests {
+public class GatewayApplicationTests {
 
 	private ObjectMapper mapper = Json.mapper();
 

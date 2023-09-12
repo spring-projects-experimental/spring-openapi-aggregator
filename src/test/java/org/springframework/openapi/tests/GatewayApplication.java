@@ -1,13 +1,12 @@
-package com.example.gateway;
+package org.springframework.openapi.tests;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
-
-import com.example.aggregator.OpenApiAggregatorSpecs;
-import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
+import org.springframework.openapi.aggregator.OpenApiAggregatorSpecs;
+import org.springframework.openapi.aggregator.OpenApiAggregatorSpecs.Spec;
 
 @SpringBootApplication
 public class GatewayApplication {

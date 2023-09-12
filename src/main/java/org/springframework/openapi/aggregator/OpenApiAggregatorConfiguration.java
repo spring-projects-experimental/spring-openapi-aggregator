@@ -1,4 +1,4 @@
-package com.example.aggregator;
+package org.springframework.openapi.aggregator;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;

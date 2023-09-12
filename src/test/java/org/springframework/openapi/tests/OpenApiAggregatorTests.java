@@ -1,13 +1,13 @@
-package com.example.gateway;
+package org.springframework.openapi.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.openapi.aggregator.OpenApiAggregator;
+import org.springframework.openapi.aggregator.OpenApiAggregatorSpecs;
+import org.springframework.openapi.aggregator.OpenApiAggregatorSpecs.Spec;
 
-import com.example.aggregator.OpenApiAggregator;
-import com.example.aggregator.OpenApiAggregatorSpecs;
-import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.core.util.Json;

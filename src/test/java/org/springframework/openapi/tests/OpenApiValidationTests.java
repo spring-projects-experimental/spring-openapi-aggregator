@@ -1,4 +1,4 @@
-package com.example.gateway;
+package org.springframework.openapi.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

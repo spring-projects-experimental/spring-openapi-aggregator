@@ -1,20 +1,17 @@
-package com.example.aggregator;
+package org.springframework.openapi.aggregator;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.springframework.stereotype.Component;
-
-import com.example.aggregator.OpenApiAggregatorSpecs.Spec;
+import org.springframework.openapi.aggregator.OpenApiAggregatorSpecs.Spec;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 
-@Component
 public class OpenApiAggregator {
 
 	private final OpenApiAggregatorSpecs specs;

@@ -1,1 +1,1 @@
-com.example.aggregator.OpenApiAggregatorConfiguration
+org.springframework.openapi.aggregator.OpenApiAggregatorConfiguration

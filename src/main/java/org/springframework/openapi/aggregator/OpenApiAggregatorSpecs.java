@@ -1,4 +1,4 @@
-package com.example.aggregator;
+package org.springframework.openapi.aggregator;
 
 import java.util.HashMap;
 import java.util.HashSet;
