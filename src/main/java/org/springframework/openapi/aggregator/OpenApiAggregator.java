@@ -1,7 +1,24 @@
+/*
+ * Copyright 2023-2023 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.openapi.aggregator;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -12,17 +29,29 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 
+/**
+ * Aggregates OpenAPI specs.
+ */
 public class OpenApiAggregator {
 
 	private final OpenApiAggregatorSpecs specs;
 
 	private final OpenAPI base;
 
+	/**
+	 * Create a new {@link OpenApiAggregator} instance.
+	 * @param specs the specs to aggregate
+	 * @param base the base to merge with, e.g. for common info
+	 */
 	public OpenApiAggregator(OpenApiAggregatorSpecs specs, OpenAPI base) {
 		this.specs = specs;
 		this.base = base;
 	}
 
+	/**
+	 * Aggregate the specs.
+	 * @return the aggregated spec
+	 */
 	public OpenAPI aggregate() {
 		OpenAPI api = new OpenAPI();
 		merge(api, base);
@@ -30,6 +59,7 @@ public class OpenApiAggregator {
 		if (base.getTags() != null) {
 			api.setTags(base.getTags());
 		}
+		Set<OpenAPI> apis = new LinkedHashSet<>();
 		for (Spec spec : specs.getSpecs()) {
 			OpenAPI item;
 			try {
@@ -40,8 +70,11 @@ public class OpenApiAggregator {
 			catch (Exception e) {
 				throw new IllegalStateException(e);
 			}
+			apis.add(item);
+			// Item might be mutated here. Maybe take a defensive clone copy?
 			merge(api, spec.filter().apply(item));
 		}
+		api = specs.getProcessor().apply(api, apis);
 		return specs.getFilter().apply(api);
 	}
 

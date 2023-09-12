@@ -1,9 +1,25 @@
+/*
+ * Copyright 2023-2023 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.openapi.aggregator;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.springframework.core.io.Resource;
@@ -86,9 +102,11 @@ public class OpenApiAggregatorSpecs {
 
 	}
 
-	private Set<Spec> specs = new HashSet<>();
+	private Set<Spec> specs = new LinkedHashSet<>();
 
 	private Function<OpenAPI, OpenAPI> filter = Function.identity();
+
+	private BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> processor = (api, items) -> api;
 
 	public Set<Spec> getSpecs() {
 		return this.specs;
@@ -105,6 +123,10 @@ public class OpenApiAggregatorSpecs {
 
 	public Function<OpenAPI, OpenAPI> getFilter() {
 		return filter;
+	}
+
+	public BiFunction<OpenAPI, Set<OpenAPI>, OpenAPI> getProcessor() {
+		return processor;
 	}
 
 	public OpenApiAggregatorSpecs filter(Function<OpenAPI, OpenAPI> filter) {
