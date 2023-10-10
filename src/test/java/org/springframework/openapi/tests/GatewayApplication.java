@@ -36,6 +36,7 @@ public class GatewayApplication {
 	private String wizards = "https://wizard-world-api.herokuapp.com";
 
 	public static void main(String[] args) {
+		System.setProperty("management.endpoints.web.exposure.include", "*");
 		SpringApplication.run(GatewayApplication.class, args);
 	}
 

@@ -15,13 +15,28 @@
  */
 package org.springframework.openapi.aggregator;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springdoc.core.configuration.SpringDocConfiguration;
+import org.springdoc.core.customizers.OpenApiBuilderCustomizer;
+import org.springdoc.core.customizers.ServerBaseUrlCustomizer;
+import org.springdoc.core.properties.SpringDocConfigProperties;
+import org.springdoc.core.providers.JavadocProvider;
+import org.springdoc.core.service.OpenAPIService;
+import org.springdoc.core.service.SecurityService;
+import org.springdoc.core.utils.PropertyResolverUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,6 +55,8 @@ import io.swagger.v3.oas.models.info.Info;
  */
 @Configuration
 @ConditionalOnBean(OpenApiAggregatorSpecs.class)
+@AutoConfigureBefore(SpringDocConfiguration.class)
+@Import(SpringdocConfiguration.class)
 public class OpenApiAggregatorConfiguration {
 
 	/**
@@ -76,8 +93,25 @@ public class OpenApiAggregatorConfiguration {
 	 */
 	@Bean
 	@ConditionalOnWebApplication
+	@ConditionalOnMissingBean(type = "org.springdoc.core.service.OpenAPIService")
 	public AggregatorEndpoint aggregatorEndpoint(OpenApiAggregator aggregator) {
 		return new AggregatorEndpoint(aggregator);
+	}
+
+}
+
+@Configuration
+@ConditionalOnClass(OpenAPIService.class)
+class SpringdocConfiguration {
+
+	@Bean
+	OpenAPIService openAPIBuilder(OpenApiAggregator aggregator, SecurityService securityParser,
+			SpringDocConfigProperties springDocConfigProperties, PropertyResolverUtils propertyResolverUtils,
+			Optional<List<OpenApiBuilderCustomizer>> openApiBuilderCustomisers,
+			Optional<List<ServerBaseUrlCustomizer>> serverBaseUrlCustomisers,
+			Optional<JavadocProvider> javadocProvider) {
+		return new OpenAPIService(Optional.of(aggregator.aggregate()), securityParser, springDocConfigProperties,
+				propertyResolverUtils, openApiBuilderCustomisers, serverBaseUrlCustomisers, javadocProvider);
 	}
 
 }

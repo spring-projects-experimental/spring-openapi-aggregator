@@ -51,6 +51,7 @@ public class GatewayApplicationTests {
 		assertThat(response.getBody()).doesNotContain("\"style\": \"form\"");
 		OpenAPI api = mapper.readValue(response.getBody(), OpenAPI.class);
 		assertThat(api.getPaths()).containsKeys("/dates/AvailableCountries", "/wizards/Elixirs");
+		assertThat(api.getPaths()).containsKeys("/actuator/health");
 		assertThat(api.getInfo().getDescription()).isEqualTo("Gateway API In Test");
 	}
 

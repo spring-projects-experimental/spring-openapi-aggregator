@@ -5,3 +5,7 @@ spring:
         title: My API
         description: My API description
         version: 1.0.0
+    aggregator:
+      path: /api-docs
+springdoc:
+  show-actuator: true
